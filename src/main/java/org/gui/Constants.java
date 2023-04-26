@@ -8,10 +8,10 @@ import java.util.Map;
 import static org.util.PieceUtil.*;
 import static org.util.PieceUtil.BLACK;
 
-class Constants {
+public class Constants {
     protected static final int BOARD_OFFSET = 25;
     protected static final int SCREEN_WIDTH = 600 + (BOARD_OFFSET * 2);
-    protected static final int SCREEN_HEIGHT = 600 + (BOARD_OFFSET * 2);
+    public static final int SCREEN_HEIGHT = 600 + (BOARD_OFFSET * 2);
     protected static final int BOARD_WIDTH = 600;
     protected static final int BOARD_HEIGHT = 600;
     protected static final int CELLS = 8;

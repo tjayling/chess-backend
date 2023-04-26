@@ -1,5 +1,6 @@
 package org.gui;
 
+import org.gui.perft.PerftGui;
 import org.logic.Mediator;
 
 import javax.swing.*;

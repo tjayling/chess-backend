@@ -1,5 +1,6 @@
-package org.gui;
+package org.gui.perft;
 
+import org.gui.GuiController;
 import org.gui.exception.InvalidFenFileException;
 
 import javax.swing.*;
