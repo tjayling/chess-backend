@@ -3,11 +3,11 @@ package org.logic;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Math.*;
 import static org.logic.PrecomputedMoveData.*;
-import static org.util.BinUtil.printBin;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
 import static org.util.PieceUtil.*;
@@ -47,19 +47,19 @@ public class MoveGenerator {
     }
 
     private static long southEastOne(long bit) {
-        return (bit >> 7) & notAFile;
+        return (bit >>> 7) & notAFile;
     }
 
     private static long southOne(long bit) {
-        return bit >> 8;
+        return bit >>> 8;
     }
 
     private static long southWestOne(long bit) {
-        return (bit >> 9) & notHFile;
+        return (bit >>> 9) & notHFile;
     }
 
     private static long westOne(long bit) {
-        return (bit >> 1) & notHFile;
+        return (bit >>> 1) & notHFile;
     }
 
     private static long northWestOne(long bit) {
@@ -154,10 +154,10 @@ public class MoveGenerator {
             int pinnedPiece = squares[position];
 
             int xDist = (position % 8) - (friendlyKingPosition % 8);
-            int yDist = (int) ((int) floor(position / 8f) - floor(friendlyKingPosition / 8f));
+            int yDist = (int) (floor(position / 8f) - floor(friendlyKingPosition / 8f));
 
-            int directionToKing = getDirectionToTarget(xDist, yDist);
-            int directionToPinningPiece = getOppositeDirection(directionToKing);
+            int directionToKingIndex = getDirectionToTarget(xDist, yDist);
+            int directionToPinningPieceIndex = getOppositeDirection(directionToKingIndex);
 
             int distanceToKing = (int) sqrt(pow(xDist, 2) + pow(yDist, 2));
 
@@ -168,19 +168,23 @@ public class MoveGenerator {
                     if (getStartSquare(move) != position) {
                         continue;
                     }
-                    if (directionToPinningPiece == 2 || directionToPinningPiece == 3) {
+                    if (directionToPinningPieceIndex == 2 || directionToPinningPieceIndex == 3) {
                         if (getStartSquare(move) == position) {
                             movesToRemove.add(move);
                         }
                     }
-
-                    if (directionToPinningPiece == 0 || directionToPinningPiece == 1) {
-                        if (getTargetSquare(move) + 8 != getStartSquare(move) && getTargetSquare(move) - 8 != getStartSquare(move)) {
+                    if (directionToPinningPieceIndex == 0 || directionToPinningPieceIndex == 1) {
+                        if (getTargetSquare(move) + 8 != getStartSquare(move) && getTargetSquare(move) + 16 != getStartSquare(move) && getTargetSquare(move) - 8 != getStartSquare(move) && getTargetSquare(move) - 16 != getStartSquare(move)) {
                             movesToRemove.add(move);
                         }
                         continue;
                     }
-                    if (!isType(squares[getTargetSquare(move)], BISHOP) || !isType(squares[getTargetSquare(move)], QUEEN)) {
+                    int attackTargetSquare = getTargetSquare(move);
+                    int pawnAttackXDist = (position % 8) - (attackTargetSquare % 8);
+                    int pawnAttackYDist = (int) ((int) floor(position / 8f) - floor(attackTargetSquare / 8f));
+                    int pawnAttackDirection = getDirectionToTarget(pawnAttackXDist, pawnAttackYDist);
+
+                    if (!isType(squares[getTargetSquare(move)], BISHOP) && !isType(squares[getTargetSquare(move)], QUEEN) || (pawnAttackDirection != directionToPinningPieceIndex)) {
                         movesToRemove.add(move);
                     }
                 }
@@ -195,32 +199,30 @@ public class MoveGenerator {
                 continue;
             }
             // Rooks cannot move diagonally so if the direction index is greater than 3 (meaning a diagonal move) we move on to the next pinned piece if any
-            if (isType(pinnedPiece, ROOK) && directionToKing > 3) {
+            if (isType(pinnedPiece, ROOK) && directionToKingIndex > 3) {
                 continue;
             }
             // Bishops cannot move orthogonally so if the direction index is less than 4 (meaning an orthogonal move) we move on to the next pinned piece if any
-            if (isType(pinnedPiece, BISHOP) && directionToKing < 4) {
+            if (isType(pinnedPiece, BISHOP) && directionToKingIndex < 4) {
                 continue;
             }
 
             // First, calculate moves to king
-            for (int n = 0; n < distanceToKing; n++) {
-                int targetSquare = position + directionOffsets[directionToKing] * (n + 1);
-                int pieceOnTargetSquare = squares[targetSquare];
-                if (pieceOnTargetSquare == 0) {
-                    addMove(position, targetSquare);
-                    continue;
-                }
-                break;
-            }
-            // Then, calculate moves to pinning piece
-            for (int n = 0; n < numSquaresToEdge[position][directionToPinningPiece]; n++) {
-                int targetSquare = position + directionOffsets[directionToPinningPiece] * (n + 1);
-                int pieceOnTargetSquare = squares[targetSquare];
+            for (int n = 1; n <= numSquaresToEdge[position][directionToPinningPieceIndex]; n++) {
+                int targetSquare = position + directionOffsets[directionToPinningPieceIndex] * n;
                 addMove(position, targetSquare);
-                if (pieceOnTargetSquare > 0) {
+                if (squares[targetSquare] != 0) {
                     break;
                 }
+            }
+
+            // Then, calculate moved to pinning piece
+            for (int n = 1; n <= numSquaresToEdge[position][directionToKingIndex]; n++) {
+                int targetSquare = position + directionOffsets[directionToKingIndex] * n;
+                if (squares[targetSquare] != 0) {
+                    break;
+                }
+                addMove(position, targetSquare);
             }
         }
     }
@@ -232,10 +234,10 @@ public class MoveGenerator {
      * @see org.logic.PrecomputedMoveData
      */
     private static int getDirectionToTarget(int xDist, int yDist) {
-        if (xDist == 0 && yDist > 0) {
+        if (xDist == 0 && yDist < 0) {
             return 0; // North
         }
-        if (xDist == 0 && yDist < 0) {
+        if (xDist == 0 && yDist > 0) {
             return 1; // South
         }
         if (xDist > 0 && yDist == 0) {
@@ -263,26 +265,35 @@ public class MoveGenerator {
 
     private static int getOppositeDirection(int direction) {
         switch (direction) {
-            case 0:
+            case 0 -> {
                 return 1;
-            case 1:
+            }
+            case 1 -> {
                 return 0;
-            case 2:
+            }
+            case 2 -> {
                 return 3;
-            case 3:
+            }
+            case 3 -> {
                 return 2;
-            case 4:
+            }
+            case 4 -> {
                 return 5;
-            case 5:
+            }
+            case 5 -> {
                 return 4;
-            case 6:
+            }
+            case 6 -> {
                 return 7;
-            case 7:
+            }
+            case 7 -> {
                 return 6;
-            default:
+            }
+            default -> {
                 // TODO: Change for logger
                 System.out.println("There was an error in opposite direction method");
                 return -1;
+            }
         }
     }
 
@@ -319,6 +330,9 @@ public class MoveGenerator {
     private static void checkKingLegality() {
         long kingPositionBitboard = addBit(0, friendlyKingPosition);
 
+        checkForPinnedPieces(kingPositionBitboard);
+        generatePinnedPieceMoves();
+
         boolean check = (kingPositionBitboard & taboo) >= 1;
         if (check) {
             moves = getRemainingLegalMoves();
@@ -334,8 +348,6 @@ public class MoveGenerator {
 //            System.out.println("STALEMATE");
             return;
         }
-        checkForPinnedPieces(kingPositionBitboard);
-        generatePinnedPieceMoves();
     }
 
     private static List<String> getRemainingLegalMoves() {
@@ -347,64 +359,127 @@ public class MoveGenerator {
         List<String> remainingLegalMoves = new ArrayList<>();
         String checkingMove = checkingMoves.get(0);
         int xDist = (getStartSquare(checkingMove) % 8) - (friendlyKingPosition % 8);
-        int yDist = (int) ((int) floor(getStartSquare(checkingMove) / 8f) - floor(friendlyKingPosition / 8f));
+        int yDist = (int) (floor(getStartSquare(checkingMove) / 8f) - floor(friendlyKingPosition / 8f));
+//        int yDist = (int) ((int) floor(position / 8f) - floor(friendlyKingPosition / 8f));
 
-        int checkDirection = directionOffsets[getDirectionToTarget(xDist, yDist)];
-//        System.out.println("DIR:" + checkDirection);
-        int checkDistance = (int) sqrt(pow(xDist, 2) + pow(yDist, 2)) - 1;
-//        System.out.println("DIST:" + checkDistance);
+        int directionIndex = getOppositeDirection(getDirectionToTarget(xDist, yDist));
+
+        int checkDirection = directionOffsets[directionIndex];
+//        int checkDistance = ((xDist <= 1 && xDist >= -1) && (yDist <= 1 && yDist >= -1)) ? 0 : (int) sqrt(pow(xDist < 0 ? xDist + 1 : xDist - 1, 2) + pow(yDist < 0 ? yDist + 1 : yDist - 1, 2));
+
+//        int checkDistance = (xDist <= 1 && xDist >= -1) && (yDist <= 1 && yDist >= -1) ? 0 : (int) sqrt(pow(xDist, 2) + pow(yDist, 2));
+
+//        System.out.println("Check dist:");
+//        System.out.println(checkDistance);
+
+//        if (checkDirection == 8 || checkDirection == -8) {
+//            checkDirection *= -1;
+//        }
 
         List<Integer> interceptingTargets = new ArrayList<>();
         if (!isType(squares[getStartSquare(checkingMove)], KNIGHT)) {
-            for (int i = 0; i <= checkDistance; i++) {
-                boolean directionIsDiagonal = checkDirection == 9 || checkDirection == -9 || checkDirection == 7 || checkDirection == -7;
-                interceptingTargets.add(friendlyKingPosition + ((directionIsDiagonal ? -checkDirection : checkDirection) * i));
+            for (int i = 1; i <= numSquaresToEdge[friendlyKingPosition][directionIndex]; i++) {
+                interceptingTargets.add(friendlyKingPosition + (checkDirection * i));
+                if (squares[friendlyKingPosition + (checkDirection * i)] != 0) {
+                    break;
+                }
             }
         }
 
         for (String friendlyMove : moves) {
+            int startSquare = getStartSquare(friendlyMove);
             int targetSquare = getTargetSquare(friendlyMove);
-            if (targetSquare == getStartSquare(checkingMove) || interceptingTargets.contains(targetSquare)) {
+
+            boolean targetSquareIsCheckingPiece = targetSquare == getStartSquare(checkingMove);
+            boolean targetSqaureInterceptsCheck = interceptingTargets.contains(targetSquare);
+            boolean pieceIsNotPinned = (0L << startSquare & pinnedPieces) == 0;
+
+            if ((targetSquareIsCheckingPiece || targetSqaureInterceptsCheck) && pieceIsNotPinned) {
                 remainingLegalMoves.add(friendlyMove);
             }
         }
+
         remainingLegalMoves.addAll(kingMoves);
-        return remainingLegalMoves;
+        return remainingLegalMoves.stream()
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     private static void checkForPinnedPieces(long kingPositionBitboard) {
         if ((kingPositionBitboard & tabooXRay) == 0) {
             return;
         }
-
         // Sliding logic sends rays out from the king
         for (int directionIndex = 0; directionIndex < 8; directionIndex++) {
             List<Integer> potentialPinnedPiecePositions = new ArrayList<>();
+
             // For each square stemming from the king position in certain direction
             for (int n = 0; n < numSquaresToEdge[friendlyKingPosition][directionIndex]; n++) {
                 int targetSquare = friendlyKingPosition + directionOffsets[directionIndex] * (n + 1);
                 int pieceOnTargetSquare = squares[targetSquare];
 
+                // If there is no piece on the target square, move to the next square in this direction
                 if (pieceOnTargetSquare == 0) {
                     continue;
                 }
+
+                // If there are no potential pinned pieces and we encounter a piece that belongs to the opponent, none of our pieces can be pinned in this direction
+                if (potentialPinnedPiecePositions.size() == 0 && isColour(pieceOnTargetSquare, opponentColour)) {
+                    break;
+                }
+
+                // If there is more than one potential pinned piece, neither are pinned as they block a potential check
                 if (potentialPinnedPiecePositions.size() > 1) {
                     break;
                 }
-                if (isSlidingPiece(pieceOnTargetSquare) && isColour(pieceOnTargetSquare, opponentColour)) {
-                    if (potentialPinnedPiecePositions.size() > 0) {
-                        if (isType(pieceOnTargetSquare, ROOK) && directionIndex > 3) {
+
+                if (isColour(pieceOnTargetSquare, opponentColour)) {
+                    if (isSlidingPiece(pieceOnTargetSquare)) {
+                        // If there is a potential pinned piece, we need to see whether the attacking piece can apply a check
+                        if (potentialPinnedPiecePositions.size() > 0) {
+                            // If the potential pinning piece is a rook and the direction to the rook is orthogonal, the rook cannot be pinning any pieces to us, and nothing else will be pinning us
+                            if (isType(pieceOnTargetSquare, ROOK) && directionIndex > 3) {
+                                break;
+                            }
+                            // If the potential pinning piece is a bishop and the direction to the rook is lateral, the bishop cannot be pinning any pieces to us, and nothing else will be pinning us
+                            if (isType(pieceOnTargetSquare, BISHOP) && directionIndex < 4) {
+                                break;
+                            }
+                            // If there is a sliding piece that does not pass the previous checks pinning us, any pinned piece is pinned so should be added to the bitboard
+                            pinnedPieces = addBit(pinnedPieces, potentialPinnedPiecePositions.get(0));
                             break;
                         }
-                        if (isType(pieceOnTargetSquare, BISHOP) && directionIndex < 4) {
-                            break;
-                        }
-                        pinnedPieces = addBit(pinnedPieces, potentialPinnedPiecePositions.get(0));
-                        break;
+                        continue;
                     }
-                    continue;
+                    break;
                 }
-                potentialPinnedPiecePositions.add(targetSquare);
+                // If the piece on the target square is friendly, it has the potential to be pinned
+                if (isColour(pieceOnTargetSquare, friendlyColour)) {
+                    potentialPinnedPiecePositions.add(targetSquare);
+                }
+
+//                // If we encounter an opponent sliding piece, we need to check if they are pinning a friendly piece to our king
+//                if (isSlidingPiece(pieceOnTargetSquare) && isColour(pieceOnTargetSquare, opponentColour)) {
+//                    // If there is a potential pinned piece, we need to see whether the attacking piece can apply a check
+//                    if (potentialPinnedPiecePositions.size() > 0) {
+//                        // If the potential pinning piece is a rook and the direction to the rook is orthogonal, the rook cannot be pinning any pieces to us, and nothing else will be pinning us
+//                        if (isType(pieceOnTargetSquare, ROOK) && directionIndex > 3) {
+//                            break;
+//                        }
+//                        // If the potential pinning piece is a bishop and the direction to the rook is lateral, the bishop cannot be pinning any pieces to us, and nothing else will be pinning us
+//                        if (isType(pieceOnTargetSquare, BISHOP) && directionIndex < 4) {
+//                            break;
+//                        }
+//                        // If there is a sliding piece that does not pass the previous checks pinning us, any pinned piece is pinned so should be added to the bitboard
+//                        pinnedPieces = addBit(pinnedPieces, potentialPinnedPiecePositions.get(0));
+//                        break;
+//                    }
+//                    continue;
+//                }
+//                // If the piece on the target square is friendly, it has the potential to be pinned
+//                if (isColour(pieceOnTargetSquare, friendlyColour)) {
+//                    potentialPinnedPiecePositions.add(targetSquare);
+//                }
             }
         }
     }
@@ -447,11 +522,11 @@ public class MoveGenerator {
             // If there is a bit switched on
             if (pawnTargets << ~target < 0) {
                 if (target < 8 || target > 55) {
-                    String promotionPieces = "rnbq";
-                    for (int i = 0; i < 4; i++) {
-                        moves.add(squareMap.get(start) + squareMap.get(target) + promotionPieces.charAt(i));
+                    char[] promotionPieces = new char[]{'r', 'n', 'b', 'q'};
+                    for (char c : promotionPieces) {
+                        moves.add(squareMap.get(start) + squareMap.get(target) + c);
                     }
-                    return;
+                    continue;
                 }
                 addMove(start, target);
             }
@@ -468,12 +543,12 @@ public class MoveGenerator {
 
         possiblePosition[0] = ((binStartSquare << 17) & notAFile);
         possiblePosition[1] = ((binStartSquare << 10) & notABFile);
-        possiblePosition[2] = ((binStartSquare >> 6) & notABFile);
-        possiblePosition[3] = ((binStartSquare >> 15) & notAFile);
+        possiblePosition[2] = ((binStartSquare >>> 6) & notABFile);
+        possiblePosition[3] = ((binStartSquare >>> 15) & notAFile);
         possiblePosition[4] = ((binStartSquare << 15) & notHFile);
         possiblePosition[5] = ((binStartSquare << 6) & notGHFile);
-        possiblePosition[6] = ((binStartSquare >> 10) & notGHFile);
-        possiblePosition[7] = ((binStartSquare >> 17) & notHFile);
+        possiblePosition[6] = ((binStartSquare >>> 10) & notGHFile);
+        possiblePosition[7] = ((binStartSquare >>> 17) & notHFile);
 
         for (long position : possiblePosition) {
             if (!friendly) {
@@ -510,6 +585,7 @@ public class MoveGenerator {
                 taboo |= targetSquareBitboard;
                 continue;
             }
+//            printBin(taboo);
             targetSquareBitboard &= ~taboo & notFriendlyPieces;
 
             int targetSquare = getPositionFromBitboard(targetSquareBitboard);
@@ -564,12 +640,16 @@ public class MoveGenerator {
 
                 if (!friendly) {
                     if (!moveBlocked) {
+//                        if (isType(piece, ROOK)) {
+//                            System.out.println("IS ROOK");
+//                            System.out.println(target);
+//                        }
                         taboo = addBit(taboo, target);
                         if (target == friendlyKingPosition) {
                             checkingMoves.add(squareMap.get(start) + squareMap.get(target));
                         }
                     }
-                    if (pieceOnTargetSquare > 0 && !isType(pieceOnTargetSquare, KING)) {
+                    if (pieceOnTargetSquare > 0 && !(isType(pieceOnTargetSquare, KING) && isColour(pieceOnTargetSquare, friendlyColour))) {
                         moveBlocked = true;
                     }
                     tabooXRay = addBit(tabooXRay, target);
@@ -608,9 +688,10 @@ public class MoveGenerator {
 
     private static List<Integer> getPositionsFromBitboard(long bitboard) {
         List<Integer> positions = new ArrayList<>();
-        while (bitboard > 0) {
-            positions.add(getPositionFromBitboard(bitboard));
-            bitboard = clearBit(bitboard, positions.get(positions.size() - 1));
+        while (bitboard != 0) {
+            int pos = getPositionFromBitboard(bitboard);
+            positions.add(pos);
+            bitboard = clearBit(bitboard, pos);
         }
         return positions;
     }
