@@ -5,6 +5,7 @@ import org.engine.StockfishEngine;
 import org.gui.perft.PerftGui;
 import org.logic.Mediator;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,15 +37,39 @@ public class GuiController {
         chessGui.setSquares(getSquaresFromFen(mediator.getCurrentFen()));
     }
 
+    public void getPerftTiming(int depth) {
+        String currentFen = mediator.getCurrentFen();
+
+        int iterations = 5;
+
+
+        double[] times = new double[iterations - 1];
+
+        for (int i = 0; i < iterations; i++) {
+            long startTime = System.nanoTime();
+            Perft.runPerftFromFen(currentFen, depth, this);
+            long endTime = System.nanoTime();
+            if (i == 0) {
+                continue;
+            }
+            double totalTime = (endTime - startTime) / 1000000.0;
+            EventQueue.invokeLater(() -> perftGui.addStringToPerftDiffPane(String.format("Time taken: %s ms\n", totalTime)));
+            times[i - 1] = totalTime;
+        }
+
+        double sum = 0;
+        for (double time : times) {
+            sum += time;
+        }
+        double averageTime = sum / (iterations - 1);
+
+        EventQueue.invokeLater(() -> perftGui.addStringToPerftDiffPane(String.format("\nAverage time taken for depth of %s:\n %s ms\n", depth, averageTime)));
+    }
+
     public void runPerftFromCurrentState(int depth) {
         String currentFen = mediator.getCurrentFen();
 
-        long startTime = System.nanoTime();
         List<String> localPerft = Perft.runPerftFromFen(currentFen, depth, this);
-        long endTime = System.nanoTime();
-        double timeTakenInMs = (endTime - startTime) / 1000000.0;
-
-        System.out.println("Time taken: " + timeTakenInMs + " ms");
 
         List<String> stockfishPerft = StockfishEngine.runPerftFromFen(currentFen, depth, this);
 

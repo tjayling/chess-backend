@@ -33,6 +33,7 @@ public class PerftGui extends JPanel implements ActionListener {
         JComboBox<Integer> comboBox = new JComboBox<>(items);
 
         JButton doPerftButton = new JButton("Do perft");
+        JButton doEfficiencyTestButton = new JButton("Do efficiency test");
 
         localOutput = new JTextArea();
         localOutput.setEditable(false);
@@ -60,6 +61,7 @@ public class PerftGui extends JPanel implements ActionListener {
         topPanel.setBackground(Color.lightGray);
         topPanel.add(comboBox);
         topPanel.add(doPerftButton);
+        topPanel.add(doEfficiencyTestButton);
 
         // Create output panels
         JPanel perftOutputPanel = new JPanel(new GridLayout(1, 2, 10, 0));
@@ -90,20 +92,45 @@ public class PerftGui extends JPanel implements ActionListener {
         add(topPanel, BorderLayout.NORTH);
         add(outputPanel, BorderLayout.CENTER);
 
-        // Attach an ActionListener to the JButton
+
+        String lineBreak = "---------------------------\n\n";
+
+        // Attach an ActionListener to the doPerftButton
         doPerftButton.addActionListener(e -> {
             if (!localOutput.getText().isEmpty()) {
-                localOutput.append("---------------------------\n\n");
-                stockfishOutput.append("---------------------------\n\n");
+                localOutput.append(lineBreak);
             }
-            Integer selectedItem = (Integer) comboBox.getSelectedItem();
-            if (selectedItem != null) {
-                int depth = selectedItem;
+            if (!stockfishOutput.getText().isEmpty()) {
+                stockfishOutput.append(lineBreak);
+            }
+            if (!localDiffOutput.getText().isEmpty()) {
+                localDiffOutput.append(lineBreak);
+            }
+            if (!stockfishDiffOutput.getText().isEmpty()) {
+                stockfishDiffOutput.append(lineBreak);
+            }
+            Integer depth = (Integer) comboBox.getSelectedItem();
+            if (depth != null) {
                 String message = String.format("Starting perft test to a depth of %s...\n", depth);
                 localOutput.append(message);
                 stockfishOutput.append(message);
 
                 new Thread(() -> controller.runPerftFromCurrentState(depth)).start();
+            }
+        });
+
+        doEfficiencyTestButton.addActionListener(e -> {
+            if (!localOutput.getText().isEmpty()) {
+                localOutput.append(lineBreak);
+            }
+            if (!localDiffOutput.getText().isEmpty()) {
+                localDiffOutput.append(lineBreak);
+            }
+            Integer depth = (Integer) comboBox.getSelectedItem();
+            if (depth != null) {
+                localOutput.append(String.format("Starting efficiency test to a depth of %s...\n", depth));
+
+                new Thread(() -> controller.getPerftTiming(depth)).start();
             }
         });
 
