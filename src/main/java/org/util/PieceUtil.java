@@ -22,20 +22,27 @@ public class PieceUtil {
 
     public static String getType(int piece) {
         switch (getLsb(piece)) {
-            case (1):
+            case (1) -> {
                 return "King";
-            case (2):
+            }
+            case (2) -> {
                 return "Pawn";
-            case (3):
+            }
+            case (3) -> {
                 return "Knight";
-            case (4):
+            }
+            case (4) -> {
                 return "Bishop";
-            case (5):
+            }
+            case (5) -> {
                 return "Rook";
-            case (6):
+            }
+            case (6) -> {
                 return "Queen";
-            default:
-                return null;
+            }
+            default -> {
+                return "Empty";
+            }
         }
     }
 

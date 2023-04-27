@@ -8,6 +8,7 @@ import java.util.stream.IntStream;
 
 import static java.lang.Math.*;
 import static org.logic.PrecomputedMoveData.*;
+import static org.util.BinUtil.printBin;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
 import static org.util.PieceUtil.*;
@@ -76,23 +77,23 @@ public class MoveGenerator {
             friendly = i != 0;
 
             boolean finalFriendly = friendly;
-            IntStream.range(0, 64).forEach(startSquare -> {
+            for (int startSquare = 0; startSquare < 64; startSquare++) {
                 int piece = squares[startSquare];
                 if ((finalFriendly && isColour(piece, opponentColour)) | (!finalFriendly && isColour(piece, friendlyColour))) {
-                    return;
+                    continue;
                 }
                 if (isType(piece, BISHOP) || isType(piece, ROOK) || isType(piece, QUEEN)) {
                     generateSlidingMoves(startSquare, piece, finalFriendly);
-                    return;
+                    continue;
                 }
                 if (isType(piece, PAWN)) {
                     generatePawnMoves(startSquare, finalFriendly);
-                    return;
+                    continue;
                 }
                 if (isType(piece, KNIGHT)) {
                     generateKnightMoves(startSquare, finalFriendly);
                 }
-            });
+            }
             generateKingMoves(friendly);
             if (friendly) {
                 generateCastleMoves();
@@ -299,31 +300,22 @@ public class MoveGenerator {
 
     private static void generateBitboards() {
         generateBitboard(WHITE);
-        generateBitboard(BLACK);
+//        generateBitboard(BLACK);
         notFriendlyPieces = friendlyColour == WHITE ? notWhite : notBlack;
         empty = notWhite & notBlack;
     }
 
     private static void generateBitboard(int colour) {
-        long notBitboard = 0;
-
+        notWhite = 0;
+        notBlack = 0;
         for (int i = 0; i < 64; i++) {
             int piece = squares[i];
-//            int root = i == 63 ? -2 : 2;
-            if (isColour(piece, colour)) {
-                continue;
+            if (!isColour(piece, BLACK)) {
+                notBlack = addBit(notBlack, i);
             }
-//            notBitboard += (long) pow(root, i);
-            notBitboard = addBit(notBitboard, i);
-        }
-
-        if (isColour(colour, WHITE)) {
-            notWhite = notBitboard;
-            return;
-        }
-
-        if (isColour(colour, BLACK)) {
-            notBlack = notBitboard;
+            if (!isColour(piece, WHITE)) {
+                notWhite = addBit(notWhite, i);
+            }
         }
     }
 
@@ -333,7 +325,7 @@ public class MoveGenerator {
         checkForPinnedPieces(kingPositionBitboard);
         generatePinnedPieceMoves();
 
-        boolean check = (kingPositionBitboard & taboo) >= 1;
+        boolean check = (kingPositionBitboard & taboo) != 0;
         if (check) {
             moves = getRemainingLegalMoves();
             if (moves.size() == 0) {
@@ -391,10 +383,10 @@ public class MoveGenerator {
             int targetSquare = getTargetSquare(friendlyMove);
 
             boolean targetSquareIsCheckingPiece = targetSquare == getStartSquare(checkingMove);
-            boolean targetSqaureInterceptsCheck = interceptingTargets.contains(targetSquare);
-            boolean pieceIsNotPinned = (0L << startSquare & pinnedPieces) == 0;
+            boolean targetSquareInterceptsCheck = interceptingTargets.contains(targetSquare);
+            boolean pieceIsNotPinned = (1L << startSquare & pinnedPieces) == 0;
 
-            if ((targetSquareIsCheckingPiece || targetSqaureInterceptsCheck) && pieceIsNotPinned) {
+            if ((targetSquareIsCheckingPiece || targetSquareInterceptsCheck) && pieceIsNotPinned) {
                 remainingLegalMoves.add(friendlyMove);
             }
         }
@@ -501,6 +493,10 @@ public class MoveGenerator {
         if (!friendly) {
             long attacks = opponentColour == WHITE ? (northEastOne(binStartSquare) | northWestOne(binStartSquare)) : (southEastOne(binStartSquare) | southWestOne(binStartSquare));
             taboo |= attacks;
+//            if (start == 48) {
+//                System.out.println("Attacks:");
+//                printBin(attacks);
+//            }
             for (int target : getPositionsFromBitboard(attacks)) {
                 if (target == friendlyKingPosition) {
                     checkingMoves.add(squareMap.get(start) + squareMap.get(target));
@@ -613,16 +609,16 @@ public class MoveGenerator {
             return;
         }
         if (friendlyColour == BLACK) {
-            if (blackCastlingRights[0] && squares[57] == 0 && squares[58] == 0 && squares[59] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0, 58), 59), 60);
-                if ((involvedSquares & taboo) == 0) {
-                    addMove(friendlyKingPosition, 58);
-                }
-            }
-            if (blackCastlingRights[1] && squares[61] == 0 && squares[62] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0, 60), 61), 62);
+            if (blackCastlingRights[0] && squares[61] == 0 && squares[62] == 0) {
+                long involvedSquares = addBit(addBit(addBit(0L, 60), 61), 62);
                 if ((involvedSquares & taboo) == 0) {
                     addMove(friendlyKingPosition, 62);
+                }
+            }
+            if (blackCastlingRights[1] && squares[57] == 0 && squares[58] == 0 && squares[59] == 0) {
+                long involvedSquares = addBit(addBit(addBit(0L, 58), 59), 60);
+                if ((involvedSquares & taboo) == 0) {
+                    addMove(friendlyKingPosition, 58);
                 }
             }
         }

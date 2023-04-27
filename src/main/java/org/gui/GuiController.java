@@ -39,7 +39,13 @@ public class GuiController {
     public void runPerftFromCurrentState(int depth) {
         String currentFen = mediator.getCurrentFen();
 
+        long startTime = System.nanoTime();
         List<String> localPerft = Perft.runPerftFromFen(currentFen, depth, this);
+        long endTime = System.nanoTime();
+        double timeTakenInMs = (endTime - startTime) / 1000000.0;
+
+        System.out.println("Time taken: " + timeTakenInMs + " ms");
+
         List<String> stockfishPerft = StockfishEngine.runPerftFromFen(currentFen, depth, this);
 
         List<String> tempLocalPerft = List.copyOf(localPerft);

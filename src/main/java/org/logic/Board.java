@@ -56,7 +56,7 @@ public class Board {
         int targetPos = getTargetSquare(move);
 
         // If the king moves, castling rights are removed for the current player
-        boolean castled = updateCastlingRightsFromKingMove(startPos, targetPos);
+        boolean castled = updateCastlingRightsFromKing(startPos, targetPos);
 
         if (castled) {
             return new MoveData(squares, colourToPlay, castlingRights, enPassantTarget);
@@ -75,7 +75,9 @@ public class Board {
         if (isType(pieceToMove, PAWN)) {
             int targetRank = (int) (floor(targetPos / 8f) + 1);
             // Play en passant move
-            playEnPassantMoves(startPos, targetPos);
+            if (takenPiece == 0) {
+                playEnPassantMoves(startPos, targetPos);
+            }
             // Then check for en passant moves on the next iteration
             checkForEnPassantMoves(move, targetRank);
             // We don't need to check what colour because pawns can't move backwards, so target will always be one of the edge ranks
@@ -181,10 +183,6 @@ public class Board {
     }
 
     private void playEnPassantMoves(int startPos, int targetPos) {
-        if (squares[targetPos] != 0) {
-            return;
-        }
-
         boolean isAttacking;
         int attackedPiece;
         boolean pieceUnderneathIsOpponentPawn;
@@ -256,21 +254,19 @@ public class Board {
     }
 
 
-    private boolean updateCastlingRightsFromKingMove(int startPos, int targetPos) {
+    private boolean updateCastlingRightsFromKing(int startPos, int targetPos) {
         if (startPos != friendlyKingPosition) {
             return false;
         }
         boolean castled = castle(targetPos);
-        if (!castled) {
-            switch (colourToPlay) {
-                case WHITE -> {
-                    castlingRights[0] = false;
-                    castlingRights[1] = false;
-                }
-                case BLACK -> {
-                    castlingRights[2] = false;
-                    castlingRights[3] = false;
-                }
+        switch (colourToPlay) {
+            case WHITE -> {
+                castlingRights[0] = false;
+                castlingRights[1] = false;
+            }
+            case BLACK -> {
+                castlingRights[2] = false;
+                castlingRights[3] = false;
             }
         }
         return castled;
@@ -281,8 +277,8 @@ public class Board {
             switch (pos) {
                 case 7 -> castlingRights[0] = false;
                 case 0 -> castlingRights[1] = false;
-                case 56 -> castlingRights[2] = false;
-                case 63 -> castlingRights[3] = false;
+                case 63 -> castlingRights[2] = false;
+                case 56 -> castlingRights[3] = false;
             }
         }
     }

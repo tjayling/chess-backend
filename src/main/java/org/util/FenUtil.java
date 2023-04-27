@@ -21,24 +21,12 @@ public class FenUtil {
             }
             if (piece != 0) {
                 switch (getType(piece)) {
-                    case "King":
-                        currentRank.append(isColour(piece, BLACK) ? "k" : "K");
-                        break;
-                    case "Pawn":
-                        currentRank.append(isColour(piece, BLACK) ? "p" : "P");
-                        break;
-                    case "Knight":
-                        currentRank.append(isColour(piece, BLACK) ? "n" : "N");
-                        break;
-                    case "Bishop":
-                        currentRank.append(isColour(piece, BLACK) ? "b" : "B");
-                        break;
-                    case "Rook":
-                        currentRank.append(isColour(piece, BLACK) ? "r" : "R");
-                        break;
-                    case "Queen":
-                        currentRank.append(isColour(piece, BLACK) ? "q" : "Q");
-                        break;
+                    case "King" -> currentRank.append(isColour(piece, BLACK) ? "k" : "K");
+                    case "Pawn" -> currentRank.append(isColour(piece, BLACK) ? "p" : "P");
+                    case "Knight" -> currentRank.append(isColour(piece, BLACK) ? "n" : "N");
+                    case "Bishop" -> currentRank.append(isColour(piece, BLACK) ? "b" : "B");
+                    case "Rook" -> currentRank.append(isColour(piece, BLACK) ? "r" : "R");
+                    case "Queen" -> currentRank.append(isColour(piece, BLACK) ? "q" : "Q");
                 }
             }
             if (i % 8 == 0) {
@@ -71,11 +59,11 @@ public class FenUtil {
         }
         //Black Queen side rights
         if (castlingRights[2]) {
-            castlingRightsFen += "q";
+            castlingRightsFen += "k";
         }
         //Black King side rights
         if (castlingRights[3]) {
-            castlingRightsFen += "k";
+            castlingRightsFen += "q";
         }
 
         if (castlingRightsFen.length() == 0) {

@@ -29,7 +29,7 @@ public class PerftGui extends JPanel implements ActionListener {
         setBorder(BorderFactory.createEmptyBorder(margin + 5, margin, margin, margin + 5));
 
         // Create a JComboBox
-        Integer[] items = {1, 2, 3, 4, 5, 6};
+        Integer[] items = {1, 2, 3, 4, 5, 6, 7};
         JComboBox<Integer> comboBox = new JComboBox<>(items);
 
         JButton doPerftButton = new JButton("Do perft");
