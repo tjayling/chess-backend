@@ -15,40 +15,44 @@ public class Board {
     private final int[] squares;
     private final boolean[] castlingRights;
     private final int colourToPlay;
-    private List<String> moves;
+    private final List<String> moves;
     private String enPassantTarget;
-    private int friendlyKingPosition;
-    private int opponentKingPosition;
+    private final int friendlyKingPosition;
 
     public Board(String encodedBoard) {
-        moves = new ArrayList<>();
         squares = getSquaresFromFen(encodedBoard);
-        castlingRights = getCastlingRightsFromFen(encodedBoard);
         colourToPlay = getColourToPlayFromFen(encodedBoard);
-        getKingPositions();
-        moves = generateMoves(encodedBoard);
+        castlingRights = getCastlingRightsFromFen(encodedBoard);
+        List<String> possibleEnPassantMoves = getEnPassantMovesFromFen(squares, getEnPassantTargetFromFen(encodedBoard));
+        int[] kingPositions = getKingPositions();
+        friendlyKingPosition = kingPositions[0];
+
+        BoardState boardState = new BoardState(squares, colourToPlay, castlingRights, possibleEnPassantMoves, friendlyKingPosition, kingPositions[1]);
+
+        moves = generateMoves(boardState);
     }
 
     public List<String> getMoves() {
         return moves;
     }
 
-    public List<String> generateMoves(String encodedBoard) {
-        List<String> possibleEnPassantMoves = getEnPassantMovesFromFen(squares, getEnPassantTargetFromFen(encodedBoard));
-        return MoveGenerator.generateMoves(squares, colourToPlay, possibleEnPassantMoves, castlingRights, friendlyKingPosition, opponentKingPosition);
+    public List<String> generateMoves(BoardState boardState) {
+        return MoveGenerator.generateMoves(boardState);
     }
 
-    private void getKingPositions() {
+    private int[] getKingPositions() {
+        int[] kingPositions = new int[2];
         for (int startSquare = 0; startSquare < 64; startSquare++) {
             int piece = squares[startSquare];
             if (isType(piece, KING) && isColour(piece, colourToPlay)) {
-                friendlyKingPosition = startSquare;
+                kingPositions[0] = startSquare;
                 continue;
             }
             if (isType(piece, KING) && isColour(piece, getOppositeColour(colourToPlay))) {
-                opponentKingPosition = startSquare;
+                kingPositions[1] = startSquare;
             }
         }
+        return kingPositions;
     }
 
     public MoveData move(String move) {

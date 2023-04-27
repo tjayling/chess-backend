@@ -20,7 +20,11 @@ public class PieceUtil {
         return getLsb(piece) == type;
     }
 
-    public static String getType(int piece) {
+    public static int getType(int piece) {
+        return getLsb(piece);
+    }
+
+    public static String getTypeString(int piece) {
         switch (getLsb(piece)) {
             case (1) -> {
                 return "King";

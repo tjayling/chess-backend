@@ -20,7 +20,7 @@ public class FenUtil {
                 currentRank.append('1');
             }
             if (piece != 0) {
-                switch (getType(piece)) {
+                switch (getTypeString(piece)) {
                     case "King" -> currentRank.append(isColour(piece, BLACK) ? "k" : "K");
                     case "Pawn" -> currentRank.append(isColour(piece, BLACK) ? "p" : "P");
                     case "Knight" -> currentRank.append(isColour(piece, BLACK) ? "n" : "N");
