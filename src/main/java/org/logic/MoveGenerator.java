@@ -299,13 +299,12 @@ public class MoveGenerator {
     }
 
     private static void generateBitboards() {
-        generateBitboard(WHITE);
-//        generateBitboard(BLACK);
+        generateBitboard();
         notFriendlyPieces = friendlyColour == WHITE ? notWhite : notBlack;
         empty = notWhite & notBlack;
     }
 
-    private static void generateBitboard(int colour) {
+    private static void generateBitboard() {
         notWhite = 0;
         notBlack = 0;
         for (int i = 0; i < 64; i++) {
