@@ -4,14 +4,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PrecomputedMoveData {
+    protected static final long notAFile = 0xFEFEFEFEFEFEFEFEL;
+    protected static final long notHFile = 0x7F7F7F7F7F7F7F7FL;
+    protected static final long notABFile = 0xFCFCFCFCFCFCFCFCL;
+    protected static final long notGHFile = 0x3F3F3F3F3F3F3F3FL;
     public static final List<String> squareMap = precomputeSquareMapValues();
 
     // north, south, east, west, south-east, north-west, south-west, north-east
-    public static final int[] directionOffsets = {8, -8, -1, 1, 7, -7, 9, -9};
+    protected static final int[] directionOffsets = {8, -8, -1, 1, 7, -7, 9, -9};
 
-    public static final int[] knightOffsets = {15, 17, 10, 6};
+    protected static final int[] knightOffsets = {15, 17, 10, 6};
 
-    public static final int[][] numSquaresToEdge = precomputeMoveData();
+    protected static final int[][] numSquaresToEdge = precomputeMoveData();
 
     public static List<String> precomputeSquareMapValues() {
         List<String> squareMap = new ArrayList<>();

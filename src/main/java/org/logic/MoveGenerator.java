@@ -1,5 +1,6 @@
 package org.logic;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,28 +15,6 @@ import static org.util.PieceUtil.*;
 
 
 public class MoveGenerator {
-    private static final long notAFile = 0xFEFEFEFEFEFEFEFEL;
-    private static final long notHFile = 0x7F7F7F7F7F7F7F7FL;
-    //    private static long pinnedPieceBitboard;
-//    private static long empty;
-//    private static long notWhite;
-//    private static long notBlack;
-//    private static long notFriendlyPieces;
-//    private static long taboo;
-//    private static long tabooXRay;
-//    private static List<String> moves;
-//    private static List<String> kingMoves;
-//    private static List<String> checkingMoves;
-//    private static int friendlyColour;
-//    private static int opponentColour;
-//    private static int[] squares;
-//    private static boolean[] castlingRights;
-//    private static int friendlyKingPosition;
-//    private static int opponentKingPosition;
-//    private final Logger logger = LoggerFactory.getLogger(MoveGenerator.class);
-
-    // rn1qkbnr/p1pppppp/b1111111/1p111111/P111P111/11111111/1PPP1PPP/RNBQKBNR w KQkq -
-
     private static long northOne(long bit) {
         return bit << 8;
     }
@@ -79,7 +58,7 @@ public class MoveGenerator {
 
             for (int startSquare = 0; startSquare < 64; startSquare++) {
                 int piece = boardState.getSquare(startSquare);
-                if ((friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, friendlyColour))) {
+                if ((piece == 0) || (friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, friendlyColour))) {
                     continue;
                 }
                 long startTime = System.nanoTime();
@@ -90,7 +69,9 @@ public class MoveGenerator {
                 }
                 long endTime = System.nanoTime();
 
-                System.out.println(getTypeString(piece));
+                double totalTime = (endTime - startTime) / 1000000.0;
+                int finalStartSquare = startSquare;
+                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
             }
             generateKingMoves(friendly, boardState, moveGeneratorState);
             if (friendly) {
@@ -471,14 +452,11 @@ public class MoveGenerator {
     }
 
     private static void generateKnightMoves(int start, boolean friendly, int friendlyKingPosition, MoveGeneratorState moveGeneratorState) {
-        long notABFile = 0xFCFCFCFCFCFCFCFCL;
-        long notGHFile = 0x3F3F3F3F3F3F3F3FL;
-
-//        long taboo = moveGeneratorState.getTaboo();
 
         long[] possiblePosition = new long[8];
 
         long binStartSquare = addBit(0, start);
+        long knightMoves = 0L;
 
         possiblePosition[0] = ((binStartSquare << 17) & notAFile);
         possiblePosition[1] = ((binStartSquare << 10) & notABFile);
