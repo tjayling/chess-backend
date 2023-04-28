@@ -1,6 +1,5 @@
 package org.logic;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,7 +7,8 @@ import java.util.stream.Collectors;
 import static java.lang.Math.floor;
 import static java.lang.Math.pow;
 import static org.logic.PrecomputedMoveData.*;
-import static org.util.BinUtil.*;
+import static org.util.BinUtil.addBit;
+import static org.util.BinUtil.clearBit;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
 import static org.util.PieceUtil.*;
@@ -61,17 +61,19 @@ public class MoveGenerator {
                 if ((piece == 0) || (friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, friendlyColour))) {
                     continue;
                 }
-                long startTime = System.nanoTime();
+//                long startTime = System.nanoTime();
                 switch (getType(piece)) {
-                    case BISHOP, ROOK, QUEEN -> generateSlidingMoves(startSquare, piece, friendly, boardState, moveGeneratorState);
+                    case BISHOP, ROOK, QUEEN ->
+                            generateSlidingMoves(startSquare, piece, friendly, boardState, moveGeneratorState);
                     case PAWN -> generatePawnMoves(startSquare, friendly, boardState, moveGeneratorState);
-                    case KNIGHT -> generateKnightMoves(startSquare, friendly, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                    case KNIGHT ->
+                            generateKnightMoves(startSquare, friendly, boardState.getFriendlyKingPosition(), moveGeneratorState);
                 }
-                long endTime = System.nanoTime();
-
-                double totalTime = (endTime - startTime) / 1000000.0;
-                int finalStartSquare = startSquare;
-                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
+//                long endTime = System.nanoTime();
+//
+//                double totalTime = (endTime - startTime) / 1000000.0;
+//                int finalStartSquare = startSquare;
+//                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
             }
             generateKingMoves(friendly, boardState, moveGeneratorState);
             if (friendly) {
@@ -442,7 +444,7 @@ public class MoveGenerator {
                 if (target < 8 || target > 55) {
                     char[] promotionPieces = new char[]{'r', 'n', 'b', 'q'};
                     for (char c : promotionPieces) {
-                       moveGeneratorState.addMove(squareMap.get(start) + squareMap.get(target) + c);
+                        moveGeneratorState.addMove(squareMap.get(start) + squareMap.get(target) + c);
                     }
                     continue;
                 }
@@ -452,35 +454,36 @@ public class MoveGenerator {
     }
 
     private static void generateKnightMoves(int start, boolean friendly, int friendlyKingPosition, MoveGeneratorState moveGeneratorState) {
-
-        long[] possiblePosition = new long[8];
-
-        long binStartSquare = addBit(0, start);
+        long binStartSquare = 1L << start;
         long knightMoves = 0L;
 
-        possiblePosition[0] = ((binStartSquare << 17) & notAFile);
-        possiblePosition[1] = ((binStartSquare << 10) & notABFile);
-        possiblePosition[2] = ((binStartSquare >>> 6) & notABFile);
-        possiblePosition[3] = ((binStartSquare >>> 15) & notAFile);
-        possiblePosition[4] = ((binStartSquare << 15) & notHFile);
-        possiblePosition[5] = ((binStartSquare << 6) & notGHFile);
-        possiblePosition[6] = ((binStartSquare >>> 10) & notGHFile);
-        possiblePosition[7] = ((binStartSquare >>> 17) & notHFile);
+        knightMoves |= ((binStartSquare << 17) & notAFile);
+        knightMoves |= ((binStartSquare << 10) & notABFile);
+        knightMoves |= ((binStartSquare >>> 6) & notABFile);
+        knightMoves |= ((binStartSquare >>> 15) & notAFile);
+        knightMoves |= ((binStartSquare << 15) & notHFile);
+        knightMoves |= ((binStartSquare << 6) & notGHFile);
+        knightMoves |= ((binStartSquare >>> 10) & notGHFile);
+        knightMoves |= ((binStartSquare >>> 17) & notHFile);
 
-        for (long position : possiblePosition) {
-            if (!friendly) {
-                int target = getPositionFromBitboard(position);
-//                taboo |= position;
-                moveGeneratorState.tabooOrEquals(position);
-                if (target == friendlyKingPosition) {
-                   moveGeneratorState.addCheckingMove(squareMap.get(start) + squareMap.get(target));
-                }
+        if (friendly) {
+            knightMoves &= moveGeneratorState.getNotFriendlyPieces();
+        }
+
+        while (knightMoves != 0) {
+            int target = Long.numberOfTrailingZeros(knightMoves);
+            long targetBit = 1L << target;
+            knightMoves ^= targetBit;
+            if (friendly) {
+                addMove(start, target, moveGeneratorState);
                 continue;
             }
 
-            position &= moveGeneratorState.getNotFriendlyPieces();
-            int target = getPositionFromBitboard(position);
-            addMove(start, target, moveGeneratorState);
+            moveGeneratorState.tabooOrEquals(targetBit);
+
+            if (target == friendlyKingPosition) {
+                moveGeneratorState.addCheckingMove(squareMap.get(start) + squareMap.get(target));
+            }
         }
     }
 
@@ -570,7 +573,7 @@ public class MoveGenerator {
                         }
                     }
 
-                   if (pieceOnTargetSquare > 0 && !(isType(pieceOnTargetSquare, KING) && isColour(pieceOnTargetSquare, boardState.getColourToPlay()))) {
+                    if (pieceOnTargetSquare > 0 && !(isType(pieceOnTargetSquare, KING) && isColour(pieceOnTargetSquare, boardState.getColourToPlay()))) {
                         moveBlocked = true;
                     }
                     moveGeneratorState.addTabooXRayBit(target);
