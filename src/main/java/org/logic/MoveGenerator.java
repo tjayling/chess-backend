@@ -8,7 +8,6 @@ import static java.lang.Math.floor;
 import static java.lang.Math.pow;
 import static org.logic.PrecomputedMoveData.*;
 import static org.util.BinUtil.addBit;
-import static org.util.BinUtil.clearBit;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
 import static org.util.PieceUtil.*;
@@ -172,7 +171,7 @@ public class MoveGenerator {
             }
 
             // First, calculate moves to king
-            for (int n = 1; n <= numSquaresToEdge[position][directionToPinningPieceIndex]; n++) {
+            for (int n = 1; n <= NUM_SQUARES_TO_EDGE[position][directionToPinningPieceIndex]; n++) {
                 int targetSquare = position + directionOffsets[directionToPinningPieceIndex] * n;
                 addMove(position, targetSquare, moveGeneratorState);
                 if (boardState.getSquare(targetSquare) != 0) {
@@ -181,7 +180,7 @@ public class MoveGenerator {
             }
 
             // Then, calculate moved to pinning piece
-            for (int n = 1; n <= numSquaresToEdge[position][directionToKingIndex]; n++) {
+            for (int n = 1; n <= NUM_SQUARES_TO_EDGE[position][directionToKingIndex]; n++) {
                 int targetSquare = position + directionOffsets[directionToKingIndex] * n;
                 if (boardState.getSquare(targetSquare) != 0) {
                     break;
@@ -314,7 +313,7 @@ public class MoveGenerator {
 
         List<Integer> interceptingTargets = new ArrayList<>();
         if (!isType(boardState.getSquare(getStartSquare(checkingMove)), KNIGHT)) {
-            for (int i = 1; i <= numSquaresToEdge[friendlyKingPosition][directionIndex]; i++) {
+            for (int i = 1; i <= NUM_SQUARES_TO_EDGE[friendlyKingPosition][directionIndex]; i++) {
                 interceptingTargets.add(friendlyKingPosition + (checkDirection * i));
                 if (boardState.getSquare(friendlyKingPosition + (checkDirection * i)) != 0) {
                     break;
@@ -353,7 +352,7 @@ public class MoveGenerator {
             List<Integer> potentialPinnedPiecePositions = new ArrayList<>();
 
             // For each square stemming from the king position in certain direction
-            for (int n = 0; n < numSquaresToEdge[friendlyKingPosition][directionIndex]; n++) {
+            for (int n = 0; n < NUM_SQUARES_TO_EDGE[friendlyKingPosition][directionIndex]; n++) {
                 int targetSquare = friendlyKingPosition + directionOffsets[directionIndex] * (n + 1);
                 int pieceOnTargetSquare = boardState.getSquare(targetSquare);
 
@@ -420,7 +419,7 @@ public class MoveGenerator {
             moveGeneratorState.tabooOrEquals(attacks);
             for (int target : getPositionsFromBitboard(attacks)) {
                 if (target == boardState.getFriendlyKingPosition()) {
-                    moveGeneratorState.addCheckingMove(squareMap.get(start) + squareMap.get(target));
+                    moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
                 }
             }
             return;
@@ -444,7 +443,7 @@ public class MoveGenerator {
                 if (target < 8 || target > 55) {
                     char[] promotionPieces = new char[]{'r', 'n', 'b', 'q'};
                     for (char c : promotionPieces) {
-                        moveGeneratorState.addMove(squareMap.get(start) + squareMap.get(target) + c);
+                        moveGeneratorState.addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target) + c);
                     }
                     continue;
                 }
@@ -455,8 +454,8 @@ public class MoveGenerator {
 
     private static void generateKnightMoves(int start, boolean friendly, int friendlyKingPosition, MoveGeneratorState moveGeneratorState) {
         long binStartSquare = 1L << start;
-        long knightMoves = 0L;
 
+        long knightMoves = 0L;
         knightMoves |= ((binStartSquare << 17) & notAFile);
         knightMoves |= ((binStartSquare << 10) & notABFile);
         knightMoves |= ((binStartSquare >>> 6) & notABFile);
@@ -465,6 +464,9 @@ public class MoveGenerator {
         knightMoves |= ((binStartSquare << 6) & notGHFile);
         knightMoves |= ((binStartSquare >>> 10) & notGHFile);
         knightMoves |= ((binStartSquare >>> 17) & notHFile);
+
+
+//        long knightMoves = KNIGHT_MOVES[start];
 
         if (friendly) {
             knightMoves &= moveGeneratorState.getNotFriendlyPieces();
@@ -482,7 +484,7 @@ public class MoveGenerator {
             moveGeneratorState.tabooOrEquals(targetBit);
 
             if (target == friendlyKingPosition) {
-                moveGeneratorState.addCheckingMove(squareMap.get(start) + squareMap.get(target));
+                moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
             }
         }
     }
@@ -508,6 +510,7 @@ public class MoveGenerator {
                 moveGeneratorState.tabooOrEquals(targetSquareBitboard);
                 continue;
             }
+
             targetSquareBitboard &= ~moveGeneratorState.getTaboo() & moveGeneratorState.getNotFriendlyPieces();
 
             int targetSquare = getPositionFromBitboard(targetSquareBitboard);
@@ -523,32 +526,33 @@ public class MoveGenerator {
         long taboo = moveGeneratorState.getTaboo();
 
         boolean[] castlingRights = boardState.getCastlingRights();
-        if (friendlyColour == WHITE) {
-            if (castlingRights[0] && squares[5] == 0 && squares[6] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0, 6), 5), 4);
-                if ((involvedSquares & taboo) == 0) {
-                    addMove(friendlyKingPosition, 6, moveGeneratorState);
+        switch (friendlyColour) {
+            case WHITE -> {
+                if (castlingRights[0] && squares[5] == 0 && squares[6] == 0) {
+                    long involvedSquares = CASTLE_MASKS[0];
+                    if ((involvedSquares & taboo) == 0) {
+                        addMove(friendlyKingPosition, 6, moveGeneratorState);
+                    }
+                }
+                if (castlingRights[1] && squares[3] == 0 && squares[2] == 0 && squares[1] == 0) {
+                    long involvedSquares = CASTLE_MASKS[1];
+                    if ((involvedSquares & taboo) == 0) {
+                        addMove(friendlyKingPosition, 2, moveGeneratorState);
+                    }
                 }
             }
-            if (castlingRights[1] && squares[3] == 0 && squares[2] == 0 && squares[1] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0, 4), 3), 2);
-                if ((involvedSquares & taboo) == 0) {
-                    addMove(friendlyKingPosition, 2, moveGeneratorState);
+            case BLACK -> {
+                if (castlingRights[2] && squares[61] == 0 && squares[62] == 0) {
+                    long involvedSquares = CASTLE_MASKS[2];
+                    if ((involvedSquares & taboo) == 0) {
+                        addMove(friendlyKingPosition, 62, moveGeneratorState);
+                    }
                 }
-            }
-            return;
-        }
-        if (friendlyColour == BLACK) {
-            if (castlingRights[2] && squares[61] == 0 && squares[62] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0L, 60), 61), 62);
-                if ((involvedSquares & taboo) == 0) {
-                    addMove(friendlyKingPosition, 62, moveGeneratorState);
-                }
-            }
-            if (castlingRights[3] && squares[57] == 0 && squares[58] == 0 && squares[59] == 0) {
-                long involvedSquares = addBit(addBit(addBit(0L, 58), 59), 60);
-                if ((involvedSquares & taboo) == 0) {
-                    addMove(friendlyKingPosition, 58, moveGeneratorState);
+                if (castlingRights[3] && squares[57] == 0 && squares[58] == 0 && squares[59] == 0) {
+                    long involvedSquares = CASTLE_MASKS[3];
+                    if ((involvedSquares & taboo) == 0) {
+                        addMove(friendlyKingPosition, 58, moveGeneratorState);
+                    }
                 }
             }
         }
@@ -557,27 +561,25 @@ public class MoveGenerator {
     private static void generateSlidingMoves(int start, int piece, boolean friendly, BoardState boardState, MoveGeneratorState moveGeneratorState) {
         int startDirIndex = isType(piece, BISHOP) ? 4 : 0;
         int endDirIndex = isType(piece, ROOK) ? 4 : 8;
+
         boolean moveBlocked;
         for (int directionIndex = startDirIndex; directionIndex < endDirIndex; directionIndex++) {
             moveBlocked = false;
-            for (int n = 0; n < numSquaresToEdge[start][directionIndex]; n++) {
+            for (int n = 0; n < NUM_SQUARES_TO_EDGE[start][directionIndex]; n++) {
                 int target = start + directionOffsets[directionIndex] * (n + 1);
                 int pieceOnTargetSquare = boardState.getSquare(target);
 
                 if (!friendly) {
                     if (!moveBlocked) {
                         moveGeneratorState.addTabooBit(target);
-//                        taboo = addBit(taboo, target);
                         if (target == boardState.getFriendlyKingPosition()) {
-                            moveGeneratorState.addCheckingMove(squareMap.get(start) + squareMap.get(target));
+                            moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
                         }
                     }
-
                     if (pieceOnTargetSquare > 0 && !(isType(pieceOnTargetSquare, KING) && isColour(pieceOnTargetSquare, boardState.getColourToPlay()))) {
                         moveBlocked = true;
                     }
                     moveGeneratorState.addTabooXRayBit(target);
-//                    tabooXRay = addBit(tabooXRay, target);
                     continue;
                 }
                 if (isColour(pieceOnTargetSquare, boardState.getColourToPlay())) {
@@ -603,21 +605,33 @@ public class MoveGenerator {
         return Long.numberOfTrailingZeros(bitboard);
     }
 
+    /**
+     * Iterates over a bitboard, removing the least significant bits and adding their positions to a list to return
+     *
+     * @param bitboard a bitboard representation of the board
+     * @return a list of positions represented by the bitboard
+     */
     private static List<Integer> getPositionsFromBitboard(long bitboard) {
         List<Integer> positions = new ArrayList<>();
         while (bitboard != 0) {
             int pos = getPositionFromBitboard(bitboard);
             positions.add(pos);
-            bitboard = clearBit(bitboard, pos);
+            bitboard ^= 1L << pos;
         }
         return positions;
     }
 
+    /**
+     * Adds a move to the moves list from the start and target squares.
+     * @param start the start square of the move
+     * @param target the target square of the move
+     * @param moveGeneratorState the state of the move generator
+     */
     private static void addMove(int start, int target, MoveGeneratorState moveGeneratorState) {
         if (target < 0 || target > 63) {
             return;
         }
-        moveGeneratorState.addMove(squareMap.get(start) + squareMap.get(target));
+        moveGeneratorState.addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
     }
 
     private static void addMove(String move, MoveGeneratorState moveGeneratorState) {
@@ -628,6 +642,6 @@ public class MoveGenerator {
         if (target < 0 || target > 63) {
             return;
         }
-        moveGeneratorState.addKingMove(squareMap.get(start) + squareMap.get(target));
+        moveGeneratorState.addKingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
     }
 }

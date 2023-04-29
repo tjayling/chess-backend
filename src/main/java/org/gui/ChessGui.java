@@ -44,21 +44,16 @@ public class ChessGui extends JPanel implements ActionListener {
 
         // Draw board
         g2.setStroke(new java.awt.BasicStroke(3));
-//        g2.setColor(Color.black);
+        g2.setColor(Color.black);
         for (int file = 0; file < CELLS; file++) {
             for (int rank = 0; rank < CELLS; rank++) {
                 if ((file + rank) % 2 == 0) {
-                    g2.setColor(Color.black);
                     g2.fillRect(BOARD_HEIGHT - CELL_SIZE - file * CELL_SIZE, BOARD_HEIGHT - CELL_SIZE - (rank * CELL_SIZE), CELL_SIZE, CELL_SIZE);
                 }
-                g2.setColor(((8 * rank) + file) % 2 == 0 ? Color.white : Color.black);
+//                g2.setColor(((8 * rank) + file) % 2 == 0 ? Color.white : Color.black);
 
-                g2.drawString(Integer.toString((8 * rank) + file), CELL_SIZE + file * CELL_SIZE - 20, CELL_SIZE + (rank * CELL_SIZE));
+//                g2.drawString(Integer.toString((8 * rank) + file), CELL_SIZE + file * CELL_SIZE - 20, CELL_SIZE + (rank * CELL_SIZE));
 
-//                if (String.format("%64s", Long.toBinaryString(Board.getTaboo())).replace(' ', '0').charAt(file + (rank * 8)) == '1') {
-//                    g2.setColor(Color.red);
-//                    g2.fillRect(BOARD_HEIGHT - CELL_SIZE - file * CELL_SIZE, BOARD_HEIGHT - CELL_SIZE - (rank * CELL_SIZE), CELL_SIZE, CELL_SIZE);
-//                }
             }
         }
 

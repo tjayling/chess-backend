@@ -1,15 +1,15 @@
 package org.util;
 
 
-import static org.logic.PrecomputedMoveData.squareMap;
+import static org.logic.PrecomputedMoveData.SQUARE_MAP;
 
 public class MoveUtil {
 
     public static int getStartSquare(String move) {
-        return (squareMap.indexOf(move.substring(0, 2)));
+        return SQUARE_MAP.indexOf(move.substring(0, 2));
     }
 
     public static int getTargetSquare(String move) {
-        return (squareMap.indexOf(move.substring(2, 4)));
+        return SQUARE_MAP.indexOf(move.substring(2, 4));
     }
 }

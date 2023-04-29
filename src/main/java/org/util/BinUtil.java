@@ -17,8 +17,4 @@ public class BinUtil {
     public static long addBit(long bitboard, int position) {
         return bitboard | (1L << position);
     }
-
-    public static long clearBit(long bitboard, int position) {
-        return (bitboard ^ (1L << position));
-    }
 }

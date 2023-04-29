@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static java.lang.Math.floor;
-import static org.logic.PrecomputedMoveData.squareMap;
+import static org.logic.PrecomputedMoveData.SQUARE_MAP;
 import static org.util.FenUtil.*;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
@@ -139,7 +139,7 @@ public class Board {
 
             String attacker = Character.toString(file) + attackingRank;
 
-            int attackingPiece = squares[squareMap.indexOf(attacker)];
+            int attackingPiece = squares[SQUARE_MAP.indexOf(attacker)];
             boolean attackerIsFriendlyPawn = isType(attackingPiece, PAWN) && isColour(attackingPiece, colourToPlay);
             if (attackerIsFriendlyPawn) {
                 enPassantMoves.add(attacker + enPassantTarget);
@@ -175,13 +175,13 @@ public class Board {
         if (targetFile - 1 >= 1) {
             int leftPiece = squares[targetPos - 1];
             if (isColour(leftPiece, opponentColour) && isType(leftPiece, PAWN)) {
-                enPassantTarget = squareMap.get(targetPawnPos);
+                enPassantTarget = SQUARE_MAP.get(targetPawnPos);
             }
         }
         if (targetFile + 1 <= 8) {
             int rightPiece = squares[targetPos + 1];
             if (isColour(rightPiece, opponentColour) && isType(rightPiece, PAWN)) {
-                enPassantTarget = squareMap.get(targetPawnPos);
+                enPassantTarget = SQUARE_MAP.get(targetPawnPos);
             }
         }
     }
