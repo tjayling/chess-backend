@@ -2,10 +2,11 @@ package org.logic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+
+import org.logic.movegen.MoveGen;
 
 import static java.lang.Math.floor;
-import static org.logic.PrecomputedMoveData.SQUARE_MAP;
+import static org.util.PrecomputedMoveData.SQUARE_MAP;
 import static org.util.FenUtil.*;
 import static org.util.MoveUtil.getStartSquare;
 import static org.util.MoveUtil.getTargetSquare;
@@ -23,11 +24,11 @@ public class Board {
         squares = getSquaresFromFen(encodedBoard);
         colourToPlay = getColourToPlayFromFen(encodedBoard);
         castlingRights = getCastlingRightsFromFen(encodedBoard);
-        List<String> possibleEnPassantMoves = getEnPassantMovesFromFen(squares, getEnPassantTargetFromFen(encodedBoard));
+        List<String> enPassantMoves = getEnPassantMovesFromFen(squares, getEnPassantTargetFromFen(encodedBoard));
         int[] kingPositions = getKingPositions();
         friendlyKingPosition = kingPositions[0];
 
-        BoardState boardState = new BoardState(squares, colourToPlay, castlingRights, possibleEnPassantMoves, friendlyKingPosition, kingPositions[1]);
+        BoardState boardState = new BoardState(squares, colourToPlay, castlingRights, enPassantMoves, friendlyKingPosition, kingPositions[1]);
 
         moves = generateMoves(boardState);
     }
@@ -37,7 +38,8 @@ public class Board {
     }
 
     public List<String> generateMoves(BoardState boardState) {
-        return MoveGenerator.generateMoves(boardState);
+        MoveGen moveGen = new MoveGen(boardState);
+        return moveGen.generateMoves();
     }
 
     private int[] getKingPositions() {
@@ -112,8 +114,8 @@ public class Board {
     }
 
     public List<String> getEnPassantMovesFromFen(int[] squares, String enPassantTarget) {
-        if (Objects.equals(enPassantTarget, "-")) {
-            return null;
+        if (enPassantTarget.equals("-")) {
+            return new ArrayList<>();
         }
         char targetFile = enPassantTarget.charAt(0);
 
