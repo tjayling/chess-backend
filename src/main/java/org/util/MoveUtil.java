@@ -1,7 +1,7 @@
 package org.util;
 
 
-import static org.logic.PrecomputedMoveData.SQUARE_MAP;
+import static org.util.PrecomputedMoveData.SQUARE_MAP;
 
 public class MoveUtil {
 

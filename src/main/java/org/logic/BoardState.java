@@ -6,29 +6,29 @@ import static org.util.PieceUtil.*;
 
 public class BoardState {
     private final int[] squares;
-    private final int colourToPlay;
+    private final int friendlyColour;
     private final int opponentColour;
     private final boolean[] castlingRights;
     private final List<String> possibleEnPassantMoves;
     private final int friendlyKingPosition;
     private final int opponentKingPosition;
 
-    public BoardState(int[] squares, int colourToPlay, boolean[] castlingRights, List<String> possibleEnPassantMoves, int friendlyKingPosition, int opponentKingPosition) {
+    public BoardState(int[] squares, int friendlyColour, boolean[] castlingRights, List<String> possibleEnPassantMoves, int friendlyKingPosition, int opponentKingPosition) {
         this.squares = squares;
-        this.colourToPlay = colourToPlay;
+        this.friendlyColour = friendlyColour;
         this.castlingRights = castlingRights;
         this.possibleEnPassantMoves = possibleEnPassantMoves;
         this.opponentKingPosition = opponentKingPosition;
         this.friendlyKingPosition = friendlyKingPosition;
-        opponentColour = getOppositeColour(colourToPlay);
+        opponentColour = getOppositeColour(friendlyColour);
     }
 
     public int[] getSquares() {
         return squares;
     }
 
-    public int getColourToPlay() {
-        return colourToPlay;
+    public int getFriendlyColour() {
+        return friendlyColour;
     }
 
     public int getOpponentColour() {

@@ -1,12 +1,12 @@
 package org.logic;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static org.util.BinUtil.addBit;
+import static org.util.MoveUtil.getStartSquare;
 import static org.util.PieceUtil.*;
+import static org.util.PrecomputedMoveData.SQUARE_MAP;
 
 public class MoveGeneratorState {
     private final long empty;
@@ -16,7 +16,6 @@ public class MoveGeneratorState {
     private long pinnedPieceBitboard = 0;
     private long taboo;
     private long tabooXRay;
-
     private List<String> moves;
     private final List<String> kingMoves;
     private final List<String> checkingMoves;
@@ -26,6 +25,7 @@ public class MoveGeneratorState {
         kingMoves = new ArrayList<>();
         checkingMoves = new ArrayList<>();
 
+//        long tempNotWhite = new Bitboard();
         long tempNotWhite = 0L;
         long tempNotBlack = 0L;
         for (int i = 0; i < 64; i++) {
@@ -39,7 +39,7 @@ public class MoveGeneratorState {
         }
         notWhite = tempNotWhite;
         notBlack = tempNotBlack;
-        notFriendlyPieces = boardState.getColourToPlay() == WHITE ? notWhite : notBlack;
+        notFriendlyPieces = boardState.getFriendlyColour() == WHITE ? notWhite : notBlack;
         empty = notWhite & notBlack;
     }
 
@@ -103,16 +103,43 @@ public class MoveGeneratorState {
         moves.add(move);
     }
 
-    public void removeAllFromMoves(List<String> movesToRemove) {
-        moves.removeAll(movesToRemove);
-    }
 
-    public void addCheckingMove(String move) {
-        checkingMoves.add(move);
+    /**
+     * Adds a move to the moves list from the start and target squares.
+     * @param start the start square of the move
+     * @param target the target square of the move=
+     */
+    public void addMove(int start, int target) {
+        checkMoveValidity(target);
+        addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
     }
 
     public void addKingMove(String move) {
         kingMoves.add(move);
+    }
+
+    public void addKingMove(int start, int target) {
+        checkMoveValidity(target);
+        addKingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
+    }
+
+    public void removeAllFromMoves(List<String> movesToRemove) {
+        moves.removeAll(movesToRemove);
+    }
+
+    public void removeMovesFromStartSquare(int position) {
+        List<String> movesToRemove = new ArrayList<>();
+
+        for (String move : moves) {
+            if (getStartSquare(move) == position) {
+                movesToRemove.add(move);
+            }
+        }
+        removeAllFromMoves(movesToRemove);
+    }
+
+    public void addCheckingMove(String move) {
+        checkingMoves.add(move);
     }
 
     public void addTabooBit(int target) {
@@ -125,5 +152,11 @@ public class MoveGeneratorState {
 
     public void addPinnedPieceBit(int position) {
         pinnedPieceBitboard |= (1L << position);
+    }
+
+    private void checkMoveValidity(int target) throws RuntimeException {
+        if (target < 0 || target > 63) {
+            throw new RuntimeException("Move out of scope: " + target);
+        }
     }
 }
