@@ -32,27 +32,32 @@ public class MoveGen {
         for (int i = 0; i < 2; i++) {
             boolean friendly = i != 0;
 
-            for (int startSquare = 0; startSquare < 64; startSquare++) {
-                int piece = boardState.getSquare(startSquare);
-                if ((piece == 0) || (friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, boardState.getFriendlyColour()))) {
-                    continue;
-                }
-//                long startTime = System.nanoTime();
-                switch (getType(piece)) {
-                    case BISHOP, ROOK, QUEEN -> generateSlidingMoves(startSquare, piece, friendly, boardState, moveGeneratorState);
-                    case PAWN -> PawnGen.generatePawnMoves(startSquare, friendly, boardState, moveGeneratorState);
-                    case KNIGHT -> KnightGen.generateKnightMoves(startSquare, friendly, boardState.getFriendlyKingPosition(), moveGeneratorState);
-                }
-//                long endTime = System.nanoTime();
-//
-//                double totalTime = (endTime - startTime) / 1000000.0;
-//                int finalStartSquare = startSquare;
-//                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
-            }
             if (friendly) {
+                for (int startSquare = 0; startSquare < 64; startSquare++) {
+                    int piece = boardState.getSquare(startSquare);
+                    if (piece == 0 || isColour(piece, boardState.getOpponentColour())) {
+                        continue;
+                    }
+                    switch (getType(piece)) {
+                        case BISHOP, ROOK, QUEEN -> SlidingGen.generateFriendlySlidingMoves(startSquare, piece, boardState, moveGeneratorState);
+                        case PAWN -> PawnGen.generatePawnMoves(startSquare, true, boardState, moveGeneratorState);
+                        case KNIGHT -> KnightGen.generateKnightMoves(startSquare, true, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                    }
+                }
                 KingGen.generateFriendlyKingMoves(boardState, moveGeneratorState);
                 generateCastleMoves(boardState, moveGeneratorState);
             } else {
+                for (int startSquare = 0; startSquare < 64; startSquare++) {
+                    int piece = boardState.getSquare(startSquare);
+                    if (piece == 0 || isColour(piece, boardState.getFriendlyColour())) {
+                        continue;
+                    }
+                    switch (getType(piece)) {
+                        case BISHOP, ROOK, QUEEN -> SlidingGen.generateOpponentSlidingMoves(startSquare, piece, boardState, moveGeneratorState);
+                        case PAWN -> PawnGen.generatePawnMoves(startSquare, false, boardState, moveGeneratorState);
+                        case KNIGHT -> KnightGen.generateKnightMoves(startSquare, false, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                    }
+                }
                 KingGen.generateOpponentKingMoves(boardState, moveGeneratorState);
             }
         }
@@ -359,43 +364,6 @@ public class MoveGen {
                 }
                 if ((castlingRights[3] && squares[57] == 0 && squares[58] == 0 && squares[59] == 0) && ((CASTLE_MASKS[3] & taboo) == 0)) {
                     moveGeneratorState.addMove(friendlyKingPosition, 58);
-                }
-            }
-        }
-    }
-
-    private static void generateSlidingMoves(int start, int piece, boolean friendly, BoardState boardState, MoveGeneratorState moveGeneratorState) {
-        int startDirIndex = isType(piece, BISHOP) ? 4 : 0;
-        int endDirIndex = isType(piece, ROOK) ? 4 : 8;
-
-        boolean moveBlocked;
-        for (int directionIndex = startDirIndex; directionIndex < endDirIndex; directionIndex++) {
-            moveBlocked = false;
-            for (int n = 0; n < NUM_SQUARES_TO_EDGE[start][directionIndex]; n++) {
-                int target = start + DIRECTION_OFFSETS[directionIndex] * (n + 1);
-                int pieceOnTargetSquare = boardState.getSquare(target);
-
-                if (!friendly) {
-                    if (!moveBlocked) {
-                        moveGeneratorState.addTabooBit(target);
-                        if (target == boardState.getFriendlyKingPosition()) {
-                            moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
-                        }
-                    }
-                    if (pieceOnTargetSquare > 0 && !(isType(pieceOnTargetSquare, KING) && isColour(pieceOnTargetSquare, boardState.getFriendlyColour()))) {
-                        moveBlocked = true;
-                    }
-                    moveGeneratorState.addTabooXRayBit(target);
-                    continue;
-                }
-                if (isColour(pieceOnTargetSquare, boardState.getFriendlyColour())) {
-                    moveBlocked = true;
-                }
-                if (!moveBlocked) {
-                    moveGeneratorState.addMove(start, target);
-                }
-                if (isColour(pieceOnTargetSquare, boardState.getOpponentColour())) {
-                    moveBlocked = true;
                 }
             }
         }
