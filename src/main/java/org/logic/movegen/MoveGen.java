@@ -39,9 +39,12 @@ public class MoveGen {
                         continue;
                     }
                     switch (getType(piece)) {
-                        case BISHOP, ROOK, QUEEN -> SlidingGen.generateFriendlySlidingMoves(startSquare, piece, boardState, moveGeneratorState);
-                        case PAWN -> PawnGen.generatePawnMoves(startSquare, true, boardState, moveGeneratorState);
-                        case KNIGHT -> KnightGen.generateKnightMoves(startSquare, true, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                        case PAWN ->
+                                PawnGen.generatePawnMoves(startSquare, true, boardState, moveGeneratorState);
+                        case BISHOP, ROOK, QUEEN ->
+                                SlidingGen.generateFriendlySlidingMoves(startSquare, piece, boardState, moveGeneratorState);
+                        case KNIGHT ->
+                                KnightGen.generateFriendlyKnightMoves(startSquare, moveGeneratorState);
                     }
                 }
                 KingGen.generateFriendlyKingMoves(boardState, moveGeneratorState);
@@ -53,9 +56,13 @@ public class MoveGen {
                         continue;
                     }
                     switch (getType(piece)) {
-                        case BISHOP, ROOK, QUEEN -> SlidingGen.generateOpponentSlidingMoves(startSquare, piece, boardState, moveGeneratorState);
-                        case PAWN -> PawnGen.generatePawnMoves(startSquare, false, boardState, moveGeneratorState);
-                        case KNIGHT -> KnightGen.generateKnightMoves(startSquare, false, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                        case PAWN ->
+                                PawnGen.generatePawnMoves(startSquare, false, boardState, moveGeneratorState);
+                        case BISHOP, ROOK, QUEEN ->
+                                SlidingGen.generateOpponentSlidingMoves(startSquare, piece, boardState, moveGeneratorState);
+                        case KNIGHT ->
+                                KnightGen.generateOpponentKnightMoves(startSquare, moveGeneratorState, boardState);
+
                     }
                 }
                 KingGen.generateOpponentKingMoves(boardState, moveGeneratorState);

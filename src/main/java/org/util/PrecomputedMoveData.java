@@ -14,16 +14,7 @@ public class PrecomputedMoveData {
     public static final char[] promotionPieces = new char[]{'r', 'n', 'b', 'q'};
     // north, south, east, west, south-east, north-west, south-west, north-east
     public static final int[] DIRECTION_OFFSETS = {8, -8, -1, 1, 7, -7, 9, -9};
-
-    public static final int[][] NUM_SQUARES_TO_EDGE = new int[64][8];
-
-    public static final long[] CASTLE_MASKS = {
-            0x70L, // White king side
-            0x1CL, // White queen side
-            0x7000000000000000L, // Black king side
-            0x1C00000000000000L // Black queen side
-    };
-
+    public static final long[] CASTLE_MASKS = new long[4];
     public static final long[] NORTH_ONE = new long[64];
     public static final long[] NORTH_EAST_ONE = new long[64];
     public static final long[] EAST_ONE = new long[64];
@@ -33,10 +24,13 @@ public class PrecomputedMoveData {
     public static final long[] WEST_ONE = new long[64];
     public static final long[] NORTH_WEST_ONE = new long[64];
     public static final long[][] KING_MOVES = new long[64][8];
+    public static final long[][] KNIGHT_TARGETS = new long[64][8];
+    public static final int[][] NUM_SQUARES_TO_EDGE = new int[64][8];
 
     static {
         for (int i = 0; i < 64; i++) {
             long currentSquare = BinUtil.createBitboard(i);
+
             NORTH_ONE[i] = BinUtil.northOne(currentSquare);
             NORTH_EAST_ONE[i] = BinUtil.northEastOne(currentSquare);
             EAST_ONE[i] = BinUtil.eastOne(currentSquare);
@@ -45,9 +39,7 @@ public class PrecomputedMoveData {
             SOUTH_WEST_ONE[i] = BinUtil.southWestOne(currentSquare);
             WEST_ONE[i] = BinUtil.westOne(currentSquare);
             NORTH_WEST_ONE[i] = BinUtil.northWestOne(currentSquare);
-        }
 
-        for (int i = 0; i < 64; i++) {
             KING_MOVES[i] = new long[]{
                     NORTH_ONE[i],
                     NORTH_EAST_ONE[i],
@@ -58,7 +50,24 @@ public class PrecomputedMoveData {
                     WEST_ONE[i],
                     NORTH_WEST_ONE[i]
             };
+
+            KNIGHT_TARGETS[i] = new long[]{
+                    ((currentSquare << 17) & NOT_A_FILE),
+                    ((currentSquare << 10) & NOT_AB_FILE),
+                    ((currentSquare >>> 6) & NOT_AB_FILE),
+                    ((currentSquare >>> 15) & NOT_A_FILE),
+                    ((currentSquare << 15) & NOT_H_FILE),
+                    ((currentSquare << 6) & NOT_GH_FILE),
+                    ((currentSquare >>> 10) & NOT_GH_FILE),
+                    ((currentSquare >>> 17) & NOT_H_FILE)
+            };
         }
+
+        CASTLE_MASKS[0] = 0x70L; // White king side
+        CASTLE_MASKS[1] = 0x1CL; // White queen side
+        CASTLE_MASKS[2] = 0x7000000000000000L; // Black king side
+        CASTLE_MASKS[3] = 0x1C00000000000000L; // Black queen side
+
 
         // Compute squareMap values
         for (int i = 0; i < 8; i++) {
@@ -87,22 +96,5 @@ public class PrecomputedMoveData {
                 };
             }
         }
-
-//        // Compute knight moves for each square on the board
-//        for (int square = 0; square < 64; square++) {
-//            long binSquare = 1L << square;
-//            long knightMoves = 0L;
-//
-//            knightMoves |= ((binSquare << 17) & notAFile);
-//            knightMoves |= ((binSquare << 10) & notABFile);
-//            knightMoves |= ((binSquare >>> 6) & notABFile);
-//            knightMoves |= ((binSquare >>> 15) & notAFile);
-//            knightMoves |= ((binSquare << 15) & notHFile);
-//            knightMoves |= ((binSquare << 6) & notGHFile);
-//            knightMoves |= ((binSquare >>> 10) & notGHFile);
-//            knightMoves |= ((binSquare >>> 17) & notHFile);
-//
-//            KNIGHT_MOVES[square] = knightMoves;
-//        }
     }
 }

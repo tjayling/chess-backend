@@ -8,14 +8,14 @@ import static org.util.PrecomputedMoveData.*;
 
 public class KingGen {
 
-    public static void generateOpponentKingMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
+    protected static void generateOpponentKingMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
         long[] kingTargets = KING_MOVES[boardState.getOpponentKingPosition()];
         for (long targetSquareBitboard : kingTargets) {
             moveGeneratorState.setTabooOrEquals(targetSquareBitboard);
         }
     }
 
-    public static void generateFriendlyKingMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
+    protected static void generateFriendlyKingMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
         int kingPosition = boardState.getFriendlyKingPosition();
         long[] kingTargets = KING_MOVES[kingPosition];
 

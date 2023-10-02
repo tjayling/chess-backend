@@ -53,11 +53,7 @@ public class MoveGeneratorState {
         if (target < 0 || target > 63) {
             return;
         }
-        addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
-    }
-
-    public void addKingMove(String move) {
-        kingMoves.add(move);
+        moves.add(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
     }
 
     public void addKingMove(int start, int target) {
@@ -66,8 +62,8 @@ public class MoveGeneratorState {
         }
         String startSquare = SQUARE_MAP.get(start);
         String targetSquare = SQUARE_MAP.get(target);
-        addMove(startSquare + targetSquare);
-        addKingMove(startSquare + targetSquare);
+        moves.add(startSquare + targetSquare);
+        kingMoves.add(startSquare + targetSquare);
     }
 
     public void removeAllFromMoves(List<String> movesToRemove) {
@@ -147,6 +143,10 @@ public class MoveGeneratorState {
 
     public void addCheckingMove(String move) {
         checkingMoves.add(move);
+    }
+
+    public void addCheckingMove(int startSquare, int targetSquare) {
+        checkingMoves.add(SQUARE_MAP.get(startSquare) + SQUARE_MAP.get(targetSquare));
     }
 
     public void addTabooBit(int target) {
