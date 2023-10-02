@@ -51,6 +51,10 @@ public class BinUtil {
         return bitboard | (1L << position);
     }
 
+    public static long createBitboard(int position) {
+        return 1L << position;
+    }
+
     public static long northOne(long bit) {
         return bit << 8;
     }

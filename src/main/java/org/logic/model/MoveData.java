@@ -1,4 +1,4 @@
-package org.logic;
+package org.logic.model;
 
 import static org.util.PieceUtil.getOppositeColour;
 

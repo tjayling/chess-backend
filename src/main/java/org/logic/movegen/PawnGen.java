@@ -1,7 +1,7 @@
 package org.logic.movegen;
 
-import org.logic.BoardState;
-import org.logic.MoveGeneratorState;
+import org.logic.model.BoardState;
+import org.logic.model.MoveGeneratorState;
 import org.util.BinUtil;
 
 import static java.lang.Math.pow;
@@ -20,7 +20,7 @@ public class PawnGen {
             long attacks = boardState.getOpponentColour() == WHITE ? (BinUtil.northEastOne(binStartSquare) | BinUtil.northWestOne(binStartSquare)) : (
                     BinUtil.southEastOne(binStartSquare) | BinUtil.southWestOne(binStartSquare));
 
-            moveGeneratorState.tabooOrEquals(attacks);
+            moveGeneratorState.setTabooOrEquals(attacks);
             for (int target : BinUtil.getPositionsFromBitboard(attacks)) {
                 if (target == boardState.getFriendlyKingPosition()) {
                     moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));

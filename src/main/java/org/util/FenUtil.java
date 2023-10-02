@@ -1,7 +1,7 @@
 package org.util;
 
 import org.gui.exception.InvalidFenFileException;
-import org.logic.MoveData;
+import org.logic.model.MoveData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,12 +66,12 @@ public class FenUtil {
             castlingRightsFen += "q";
         }
 
-        if (castlingRightsFen.length() == 0) {
+        if (castlingRightsFen.isEmpty()) {
             castlingRightsFen += "-";
         }
 
         String enPassantTarget = moveData.getEnPassantTarget();
-        String enPassantFen = (enPassantTarget == null || enPassantTarget.length() == 0) ? "-" : enPassantTarget;
+        String enPassantFen = (enPassantTarget == null || enPassantTarget.isEmpty()) ? "-" : enPassantTarget;
 
         String newFen = squaresFen;
         newFen += " " + colourFen;

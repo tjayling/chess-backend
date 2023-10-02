@@ -1,12 +1,14 @@
 package org.logic;
 
+import org.logic.model.MoveData;
+
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 
-import static org.util.FenUtil.generateFenFromMoveData;
-import static org.util.LoadUtil.loadFenFromFile;
+import org.util.FenUtil;
+import org.util.LoadUtil;
 
 public class Mediator {
     private static final Queue<String> squareHistory = Collections.asLifoQueue(new ArrayDeque<>());
@@ -14,13 +16,12 @@ public class Mediator {
     private Board board;
 
     public Mediator() {
-        this.currentFen = loadFenFromFile();
+        this.currentFen = LoadUtil.loadFenFromFile();
         this.board = new Board(currentFen);
     }
 
-
     public Mediator(String str, boolean isUrl) {
-        this.currentFen = isUrl ? loadFenFromFile(str) : str;
+        this.currentFen = isUrl ? LoadUtil.loadFenFromFile(str) : str;
         this.board = new Board(currentFen);
     }
 
@@ -37,7 +38,7 @@ public class Mediator {
         MoveData moveData = board.move(move);
         moveData.flipColourToPlay();
 
-        currentFen = generateFenFromMoveData(moveData);
+        currentFen = FenUtil.generateFenFromMoveData(moveData);
         board = new Board(currentFen);
         return currentFen;
     }

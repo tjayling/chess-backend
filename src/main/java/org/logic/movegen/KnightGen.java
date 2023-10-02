@@ -6,7 +6,7 @@ import static org.util.PrecomputedMoveData.NOT_GH_FILE;
 import static org.util.PrecomputedMoveData.NOT_H_FILE;
 import static org.util.PrecomputedMoveData.SQUARE_MAP;
 
-import org.logic.MoveGeneratorState;
+import org.logic.model.MoveGeneratorState;
 
 public class KnightGen {
   protected static void generateKnightMoves(int start, boolean friendly, int friendlyKingPosition, MoveGeneratorState moveGeneratorState) {
@@ -38,7 +38,7 @@ public class KnightGen {
         continue;
       }
 
-      moveGeneratorState.tabooOrEquals(targetBit);
+      moveGeneratorState.setTabooOrEquals(targetBit);
 
       if (target == friendlyKingPosition) {
         moveGeneratorState.addCheckingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));

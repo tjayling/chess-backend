@@ -24,7 +24,42 @@ public class PrecomputedMoveData {
             0x1C00000000000000L // Black queen side
     };
 
+    public static final long[] NORTH_ONE = new long[64];
+    public static final long[] NORTH_EAST_ONE = new long[64];
+    public static final long[] EAST_ONE = new long[64];
+    public static final long[] SOUTH_EAST_ONE = new long[64];
+    public static final long[] SOUTH_ONE = new long[64];
+    public static final long[] SOUTH_WEST_ONE = new long[64];
+    public static final long[] WEST_ONE = new long[64];
+    public static final long[] NORTH_WEST_ONE = new long[64];
+    public static final long[][] KING_MOVES = new long[64][8];
+
     static {
+        for (int i = 0; i < 64; i++) {
+            long currentSquare = BinUtil.createBitboard(i);
+            NORTH_ONE[i] = BinUtil.northOne(currentSquare);
+            NORTH_EAST_ONE[i] = BinUtil.northEastOne(currentSquare);
+            EAST_ONE[i] = BinUtil.eastOne(currentSquare);
+            SOUTH_EAST_ONE[i] = BinUtil.southEastOne(currentSquare);
+            SOUTH_ONE[i] = BinUtil.southOne(currentSquare);
+            SOUTH_WEST_ONE[i] = BinUtil.southWestOne(currentSquare);
+            WEST_ONE[i] = BinUtil.westOne(currentSquare);
+            NORTH_WEST_ONE[i] = BinUtil.northWestOne(currentSquare);
+        }
+
+        for (int i = 0; i < 64; i++) {
+            KING_MOVES[i] = new long[]{
+                    NORTH_ONE[i],
+                    NORTH_EAST_ONE[i],
+                    EAST_ONE[i],
+                    SOUTH_EAST_ONE[i],
+                    SOUTH_ONE[i],
+                    SOUTH_WEST_ONE[i],
+                    WEST_ONE[i],
+                    NORTH_WEST_ONE[i]
+            };
+        }
+
         // Compute squareMap values
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {

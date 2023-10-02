@@ -1,4 +1,4 @@
-package org.logic;
+package org.logic.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +41,48 @@ public class MoveGeneratorState {
         notBlack = tempNotBlack;
         notFriendlyPieces = boardState.getFriendlyColour() == WHITE ? notWhite : notBlack;
         empty = notWhite & notBlack;
+    }
+
+    /**
+     * Adds a move to the moves list from the start and target squares.
+     *
+     * @param start  the start square of the move
+     * @param target the target square of the move=
+     */
+    public void addMove(int start, int target) {
+        if (target < 0 || target > 63) {
+            return;
+        }
+        addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
+    }
+
+    public void addKingMove(String move) {
+        kingMoves.add(move);
+    }
+
+    public void addKingMove(int start, int target) {
+        if (target < 0 || target > 63) {
+            return;
+        }
+        String startSquare = SQUARE_MAP.get(start);
+        String targetSquare = SQUARE_MAP.get(target);
+        addMove(startSquare + targetSquare);
+        addKingMove(startSquare + targetSquare);
+    }
+
+    public void removeAllFromMoves(List<String> movesToRemove) {
+        moves.removeAll(movesToRemove);
+    }
+
+    public void removeMovesFromStartSquare(int position) {
+        List<String> movesToRemove = new ArrayList<>();
+
+        for (String move : moves) {
+            if (getStartSquare(move) == position) {
+                movesToRemove.add(move);
+            }
+        }
+        removeAllFromMoves(movesToRemove);
     }
 
     public long getPinnedPieceBitboard() {
@@ -95,47 +137,12 @@ public class MoveGeneratorState {
         this.moves = moves;
     }
 
-    public void tabooOrEquals(long bitboard) {
+    public void setTabooOrEquals(long bitboard) {
         taboo |= bitboard;
     }
 
     public void addMove(String move) {
         moves.add(move);
-    }
-
-
-    /**
-     * Adds a move to the moves list from the start and target squares.
-     * @param start the start square of the move
-     * @param target the target square of the move=
-     */
-    public void addMove(int start, int target) {
-        checkMoveValidity(target);
-        addMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
-    }
-
-    public void addKingMove(String move) {
-        kingMoves.add(move);
-    }
-
-    public void addKingMove(int start, int target) {
-        checkMoveValidity(target);
-        addKingMove(SQUARE_MAP.get(start) + SQUARE_MAP.get(target));
-    }
-
-    public void removeAllFromMoves(List<String> movesToRemove) {
-        moves.removeAll(movesToRemove);
-    }
-
-    public void removeMovesFromStartSquare(int position) {
-        List<String> movesToRemove = new ArrayList<>();
-
-        for (String move : moves) {
-            if (getStartSquare(move) == position) {
-                movesToRemove.add(move);
-            }
-        }
-        removeAllFromMoves(movesToRemove);
     }
 
     public void addCheckingMove(String move) {
@@ -152,11 +159,5 @@ public class MoveGeneratorState {
 
     public void addPinnedPieceBit(int position) {
         pinnedPieceBitboard |= (1L << position);
-    }
-
-    private void checkMoveValidity(int target) throws RuntimeException {
-        if (target < 0 || target > 63) {
-            throw new RuntimeException("Move out of scope: " + target);
-        }
     }
 }

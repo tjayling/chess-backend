@@ -1,7 +1,7 @@
 package org.gui;
 
 import org.engine.Perft;
-import org.engine.StockfishEngine;
+import org.engine.StockfishEngineConn;
 import org.gui.perft.PerftGui;
 import org.logic.Mediator;
 
@@ -71,7 +71,7 @@ public class GuiController {
 
         List<String> localPerft = Perft.runPerftFromFen(currentFen, depth, this);
 
-        List<String> stockfishPerft = StockfishEngine.runPerftFromFen(currentFen, depth, this);
+        List<String> stockfishPerft = StockfishEngineConn.runPerftFromFen(currentFen, depth, this);
 
         List<String> tempLocalPerft = List.copyOf(localPerft);
 

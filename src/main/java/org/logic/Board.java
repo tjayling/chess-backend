@@ -3,6 +3,8 @@ package org.logic;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.logic.model.BoardState;
+import org.logic.model.MoveData;
 import org.logic.movegen.MoveGen;
 
 import static java.lang.Math.floor;

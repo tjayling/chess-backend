@@ -1,7 +1,7 @@
 package org.logic.movegen;
 
-import org.logic.BoardState;
-import org.logic.MoveGeneratorState;
+import org.logic.model.BoardState;
+import org.logic.model.MoveGeneratorState;
 import org.util.BinUtil;
 import org.util.PrecomputedMoveData;
 
@@ -26,6 +26,41 @@ public class MoveGen {
     public MoveGen(BoardState boardState) {
         this.boardState = boardState;
         this.moveGeneratorState = new MoveGeneratorState(boardState);
+    }
+
+    public List<String> generateMoves() {
+        for (int i = 0; i < 2; i++) {
+            boolean friendly = i != 0;
+
+            for (int startSquare = 0; startSquare < 64; startSquare++) {
+                int piece = boardState.getSquare(startSquare);
+                if ((piece == 0) || (friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, boardState.getFriendlyColour()))) {
+                    continue;
+                }
+//                long startTime = System.nanoTime();
+                switch (getType(piece)) {
+                    case BISHOP, ROOK, QUEEN -> generateSlidingMoves(startSquare, piece, friendly, boardState, moveGeneratorState);
+                    case PAWN -> PawnGen.generatePawnMoves(startSquare, friendly, boardState, moveGeneratorState);
+                    case KNIGHT -> KnightGen.generateKnightMoves(startSquare, friendly, boardState.getFriendlyKingPosition(), moveGeneratorState);
+                }
+//                long endTime = System.nanoTime();
+//
+//                double totalTime = (endTime - startTime) / 1000000.0;
+//                int finalStartSquare = startSquare;
+//                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
+            }
+            if (friendly) {
+                KingGen.generateFriendlyKingMoves(boardState, moveGeneratorState);
+                generateCastleMoves(boardState, moveGeneratorState);
+            } else {
+                KingGen.generateOpponentKingMoves(boardState, moveGeneratorState);
+            }
+        }
+
+        checkKingLegality(boardState, moveGeneratorState);
+        checkEnPassantMoves(boardState.getPossibleEnPassantMoves(), moveGeneratorState);
+
+        return moveGeneratorState.getMoves();
     }
 
     private static void checkEnPassantMoves(List<String> possibleEnPassantMoves, MoveGeneratorState moveGeneratorState) {
@@ -302,35 +337,6 @@ public class MoveGen {
         }
     }
 
-    private static void generateKingMoves(boolean friendly, BoardState boardState, MoveGeneratorState moveGeneratorState) {
-        int friendlyKingPosition = boardState.getFriendlyKingPosition();
-
-        long binStartSquare = addBit(0, friendly ? friendlyKingPosition : boardState.getOpponentKingPosition());
-        long[] kingTargets = new long[8];
-
-        kingTargets[0] = BinUtil.northWestOne(binStartSquare);
-        kingTargets[1] = BinUtil.northOne(binStartSquare);
-        kingTargets[2] = BinUtil.northEastOne(binStartSquare);
-        kingTargets[3] = BinUtil.southEastOne(binStartSquare);
-        kingTargets[4] = BinUtil.southOne(binStartSquare);
-        kingTargets[5] = BinUtil.southWestOne(binStartSquare);
-        kingTargets[6] = BinUtil.eastOne(binStartSquare);
-        kingTargets[7] = BinUtil.westOne(binStartSquare);
-
-        for (long targetSquareBitboard : kingTargets) {
-            if (!friendly) {
-                moveGeneratorState.tabooOrEquals(targetSquareBitboard);
-                continue;
-            }
-
-            targetSquareBitboard &= ~moveGeneratorState.getTaboo() & moveGeneratorState.getNotFriendlyPieces();
-
-            int targetSquare = BinUtil.getPositionFromBitboard(targetSquareBitboard);
-            moveGeneratorState.addMove(friendlyKingPosition, targetSquare);
-            moveGeneratorState.addKingMove(friendlyKingPosition, targetSquare);
-        }
-    }
-
     private static void generateCastleMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
         int friendlyColour = boardState.getFriendlyColour();
         int friendlyKingPosition = boardState.getFriendlyKingPosition();
@@ -395,38 +401,5 @@ public class MoveGen {
         }
     }
 
-    public List<String> generateMoves() {
-        for (int i = 0; i < 2; i++) {
-            boolean friendly = i != 0;
 
-            for (int startSquare = 0; startSquare < 64; startSquare++) {
-                int piece = boardState.getSquare(startSquare);
-                if ((piece == 0) || (friendly && isColour(piece, boardState.getOpponentColour())) || (!friendly && isColour(piece, boardState.getFriendlyColour()))) {
-                    continue;
-                }
-//                long startTime = System.nanoTime();
-                switch (getType(piece)) {
-                    case BISHOP, ROOK, QUEEN ->
-                            generateSlidingMoves(startSquare, piece, friendly, boardState, moveGeneratorState);
-                    case PAWN -> PawnGen.generatePawnMoves(startSquare, friendly, boardState, moveGeneratorState);
-                    case KNIGHT ->
-                            KnightGen.generateKnightMoves(startSquare, friendly, boardState.getFriendlyKingPosition(), moveGeneratorState);
-                }
-//                long endTime = System.nanoTime();
-//
-//                double totalTime = (endTime - startTime) / 1000000.0;
-//                int finalStartSquare = startSquare;
-//                EventQueue.invokeLater(() -> System.out.printf("%s: %s time: %.5f\n", finalStartSquare, getTypeString(piece), totalTime));
-            }
-            generateKingMoves(friendly, boardState, moveGeneratorState);
-            if (friendly) {
-                generateCastleMoves(boardState, moveGeneratorState);
-            }
-        }
-
-        checkKingLegality(boardState, moveGeneratorState);
-        checkEnPassantMoves(boardState.getPossibleEnPassantMoves(), moveGeneratorState);
-
-        return moveGeneratorState.getMoves();
-    }
 }
