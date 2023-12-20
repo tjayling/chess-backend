@@ -11,42 +11,39 @@ import static org.util.PrecomputedMoveData.*;
 
 public class PawnGen {
 
-    static void generatePawnMoves(int startSquare, boolean friendly, BoardState boardState, MoveGeneratorState moveGeneratorState) {
+    public static void generateFriendlyPawnMoves(int startSquare, BoardState boardState, MoveGeneratorState moveGeneratorState) {
         long binStartSquare = BinUtil.bitboardFromPosition(startSquare);
-
-        // Taboo logic
-        if (!friendly) {
-            long attacks = boardState.getOpponentColour() == WHITE
-                           ? NORTH_EAST_ONE[startSquare] | NORTH_WEST_ONE[startSquare]
-                           : SOUTH_EAST_ONE[startSquare] | SOUTH_WEST_ONE[startSquare];
-
-            moveGeneratorState.setTabooOrEquals(attacks);
-            for (int target : BinUtil.getPositions(attacks)) {
-                if (target == boardState.getFriendlyKingPosition()) {
-                    moveGeneratorState.addCheckingMove(SQUARE_MAP.get(startSquare) + SQUARE_MAP.get(target));
-                }
-            }
-            return;
-        }
-
-        int friendlyColour = boardState.getFriendlyColour();
         long empty = moveGeneratorState.getEmpty();
 
-        long singleTargets = friendlyColour == WHITE ? NORTH_ONE[startSquare] & empty : SOUTH_ONE[startSquare] & empty;
-        long doubleTargets = friendlyColour == WHITE ? (singleTargets << 8) & empty & RANK_4 : (singleTargets >>> 8) & empty & RANK_5;
-        long attacks = generatePawnAttacks(startSquare, binStartSquare, friendlyColour, moveGeneratorState);
+        long singleTargets;
+        long doubleTargets;
+        long attacks;
+
+        if (boardState.getFriendlyColour() == WHITE) {
+           singleTargets = NORTH_ONE[startSquare] & empty;
+           doubleTargets = (singleTargets << 8) & empty & RANK_4;
+           attacks = (binStartSquare & moveGeneratorState.getPinnedPieceBitboard()) != 0 ? 0 : (NORTH_EAST_ONE[startSquare] | NORTH_WEST_ONE[startSquare]) & ~moveGeneratorState.getNotBlack();
+        } else {
+           singleTargets = SOUTH_ONE[startSquare] & empty;
+           doubleTargets = (singleTargets >>> 8) & empty & RANK_5;
+           attacks = (binStartSquare & moveGeneratorState.getPinnedPieceBitboard()) != 0 ? 0 : (SOUTH_EAST_ONE[startSquare] | SOUTH_WEST_ONE[startSquare]) & ~moveGeneratorState.getNotWhite();
+        }
 
         long pawnTargets = singleTargets | doubleTargets | attacks;
         addPawnMoves(startSquare, pawnTargets, moveGeneratorState);
     }
 
-    private static long generatePawnAttacks(int startSquare, long binStartSquare, int friendlyColour, MoveGeneratorState moveGeneratorState) {
-        if ((binStartSquare & moveGeneratorState.getPinnedPieceBitboard()) > 0) {
-            return 0;
+    public static void generateOpponentPawnMoves(int startSquare, BoardState boardState, MoveGeneratorState moveGeneratorState) {
+        long attacks = boardState.getOpponentColour() == WHITE
+                       ? NORTH_EAST_ONE[startSquare] | NORTH_WEST_ONE[startSquare]
+                       : SOUTH_EAST_ONE[startSquare] | SOUTH_WEST_ONE[startSquare];
+
+        moveGeneratorState.setTabooOrEquals(attacks);
+        for (int target : BinUtil.getPositions(attacks)) {
+            if (target == boardState.getFriendlyKingPosition()) {
+                moveGeneratorState.addCheckingMove(SQUARE_MAP.get(startSquare) + SQUARE_MAP.get(target));
+            }
         }
-        return friendlyColour == WHITE
-               ? (NORTH_EAST_ONE[startSquare] | NORTH_WEST_ONE[startSquare]) & ~moveGeneratorState.getNotBlack()
-               : (SOUTH_EAST_ONE[startSquare] | SOUTH_WEST_ONE[startSquare]) & ~moveGeneratorState.getNotWhite();
     }
 
     private static void addPawnMoves(int start, long pawnTargets, MoveGeneratorState moveGeneratorState) {
