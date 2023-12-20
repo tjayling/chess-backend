@@ -1,17 +1,24 @@
 package org.util;
 
+import static org.logic.model.BitboardMask.NOT_A;
+import static org.logic.model.BitboardMask.NOT_AB;
+import static org.logic.model.BitboardMask.NOT_GH;
+import static org.logic.model.BitboardMask.NOT_H;
+import static org.util.DirectionUtil.eastOne;
+import static org.util.DirectionUtil.northEastOne;
+import static org.util.DirectionUtil.northOne;
+import static org.util.DirectionUtil.northWestOne;
+import static org.util.DirectionUtil.southEastOne;
+import static org.util.DirectionUtil.southOne;
+import static org.util.DirectionUtil.southWestOne;
+import static org.util.DirectionUtil.westOne;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class PrecomputedMoveData {
     public static final List<String> SQUARE_MAP = new ArrayList<>();
-    public static final long RANK_4 = 0x00000000FF000000L;
-    public static final long RANK_5 = 0x000000FF00000000L;
-    public static final long NOT_A_FILE = 0xFEFEFEFEFEFEFEFEL;
-    public static final long NOT_H_FILE = 0x7F7F7F7F7F7F7F7FL;
-    public static final long NOT_AB_FILE = 0xFCFCFCFCFCFCFCFCL;
-    public static final long NOT_GH_FILE = 0x3F3F3F3F3F3F3F3FL;
-    public static final char[] promotionPieces = new char[]{'r', 'n', 'b', 'q'};
+    public static final char[] PROMOTION_PIECES = new char[]{'r', 'n', 'b', 'q'};
     // north, south, east, west, south-east, north-west, south-west, north-east
     public static final int[] DIRECTION_OFFSETS = {8, -8, -1, 1, 7, -7, 9, -9};
     public static final long[] CASTLE_MASKS = new long[4];
@@ -26,19 +33,21 @@ public class PrecomputedMoveData {
     public static final long[][] KING_MOVES = new long[64][8];
     public static final long[][] KNIGHT_TARGETS = new long[64][8];
     public static final int[][] NUM_SQUARES_TO_EDGE = new int[64][8];
+    public static final int[][] X_DIST = new int[64][64];
+    public static final int[][] Y_DIST = new int[64][64];
 
     static {
         for (int i = 0; i < 64; i++) {
-            long currentSquare = BinUtil.createBitboard(i);
+            long currentSquare = BinUtil.bitboardFromPosition(i);
 
-            NORTH_ONE[i] = BinUtil.northOne(currentSquare);
-            NORTH_EAST_ONE[i] = BinUtil.northEastOne(currentSquare);
-            EAST_ONE[i] = BinUtil.eastOne(currentSquare);
-            SOUTH_EAST_ONE[i] = BinUtil.southEastOne(currentSquare);
-            SOUTH_ONE[i] = BinUtil.southOne(currentSquare);
-            SOUTH_WEST_ONE[i] = BinUtil.southWestOne(currentSquare);
-            WEST_ONE[i] = BinUtil.westOne(currentSquare);
-            NORTH_WEST_ONE[i] = BinUtil.northWestOne(currentSquare);
+            NORTH_ONE[i] = northOne(currentSquare);
+            NORTH_EAST_ONE[i] = northEastOne(currentSquare);
+            EAST_ONE[i] = eastOne(currentSquare);
+            SOUTH_EAST_ONE[i] = southEastOne(currentSquare);
+            SOUTH_ONE[i] = southOne(currentSquare);
+            SOUTH_WEST_ONE[i] = southWestOne(currentSquare);
+            WEST_ONE[i] = westOne(currentSquare);
+            NORTH_WEST_ONE[i] = northWestOne(currentSquare);
 
             KING_MOVES[i] = new long[]{
                     NORTH_ONE[i],
@@ -52,15 +61,26 @@ public class PrecomputedMoveData {
             };
 
             KNIGHT_TARGETS[i] = new long[]{
-                    ((currentSquare << 17) & NOT_A_FILE),
-                    ((currentSquare << 10) & NOT_AB_FILE),
-                    ((currentSquare >>> 6) & NOT_AB_FILE),
-                    ((currentSquare >>> 15) & NOT_A_FILE),
-                    ((currentSquare << 15) & NOT_H_FILE),
-                    ((currentSquare << 6) & NOT_GH_FILE),
-                    ((currentSquare >>> 10) & NOT_GH_FILE),
-                    ((currentSquare >>> 17) & NOT_H_FILE)
+                    ((currentSquare << 17) & NOT_A),
+                    ((currentSquare << 10) & NOT_AB),
+                    ((currentSquare >>> 6) & NOT_AB),
+                    ((currentSquare >>> 15) & NOT_A),
+                    ((currentSquare << 15) & NOT_H),
+                    ((currentSquare << 6) & NOT_GH),
+                    ((currentSquare >>> 10) & NOT_GH),
+                    ((currentSquare >>> 17) & NOT_H)
             };
+
+
+            for (int to = 0; to < 64; to++) {
+              int fromX = i % 8;
+              int fromY = i / 8;
+              int toX = to % 8;
+              int toY = to / 8;
+
+              X_DIST[i][to] = toX - fromX;
+              Y_DIST[i][to] = toY - fromY;
+            }
         }
 
         CASTLE_MASKS[0] = 0x70L; // White king side

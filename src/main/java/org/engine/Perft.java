@@ -17,7 +17,6 @@ public class Perft {
         mediator = new Mediator(fen, false);
         int totalPermutations = search(depth, depth, "", controller);
 
-        EventQueue.invokeLater(() -> controller.addStringToPerftPane("\n"));
         String nodesSearched = String.format("Nodes searched: %s", totalPermutations);
         EventQueue.invokeLater(() -> controller.addStringToPerftPane("\n"));
 

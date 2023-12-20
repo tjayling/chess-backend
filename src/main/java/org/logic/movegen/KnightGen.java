@@ -12,7 +12,7 @@ public class KnightGen {
 
         for (long target : knightTargets) {
             target &= moveGeneratorState.getNotFriendlyPieces();
-            int targetSquare = BinUtil.getPositionFromBitboard(target);
+            int targetSquare = BinUtil.getLastPosition(target);
             moveGeneratorState.addMove(startSquare, targetSquare);
         }
     }
@@ -23,7 +23,7 @@ public class KnightGen {
         for (long target : knightTargets) {
             moveGeneratorState.setTabooOrEquals(target);
 
-            int targetSquare = BinUtil.getPositionFromBitboard(target);
+            int targetSquare = BinUtil.getLastPosition(target);
             if (targetSquare == boardState.getFriendlyKingPosition()) {
                 moveGeneratorState.addCheckingMove(startSquare, targetSquare);
             }

@@ -1,21 +1,42 @@
 package org.logic.movegen;
 
-import org.logic.model.BoardState;
-import org.logic.model.MoveGeneratorState;
-import org.util.BinUtil;
-import org.util.PrecomputedMoveData;
+import static org.logic.movegen.Direction.EAST;
+import static org.logic.movegen.Direction.NORTH;
+import static org.logic.movegen.Direction.NORTH_EAST;
+import static org.logic.movegen.Direction.NORTH_WEST;
+import static org.logic.movegen.Direction.SOUTH;
+import static org.logic.movegen.Direction.SOUTH_EAST;
+import static org.logic.movegen.Direction.SOUTH_WEST;
+import static org.logic.movegen.Direction.WEST;
+import static org.util.BinUtil.addBit;
+import static org.util.BinUtil.getPositions;
+import static org.util.MoveUtil.getStartSquare;
+import static org.util.MoveUtil.getTargetSquare;
+import static org.util.PieceUtil.BISHOP;
+import static org.util.PieceUtil.BLACK;
+import static org.util.PieceUtil.KNIGHT;
+import static org.util.PieceUtil.PAWN;
+import static org.util.PieceUtil.QUEEN;
+import static org.util.PieceUtil.ROOK;
+import static org.util.PieceUtil.WHITE;
+import static org.util.PieceUtil.getType;
+import static org.util.PieceUtil.isColour;
+import static org.util.PieceUtil.isSlidingPiece;
+import static org.util.PieceUtil.isType;
+import static org.util.PrecomputedMoveData.CASTLE_MASKS;
+import static org.util.PrecomputedMoveData.DIRECTION_OFFSETS;
+import static org.util.PrecomputedMoveData.NUM_SQUARES_TO_EDGE;
+import static org.util.PrecomputedMoveData.X_DIST;
+import static org.util.PrecomputedMoveData.Y_DIST;
+
+import static java.lang.Math.floor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.lang.Math.floor;
-import static org.logic.movegen.Direction.*;
-import static org.util.BinUtil.addBit;
-import static org.util.MoveUtil.getStartSquare;
-import static org.util.MoveUtil.getTargetSquare;
-import static org.util.PieceUtil.*;
-import static org.util.PrecomputedMoveData.*;
+import org.logic.model.BoardState;
+import org.logic.model.MoveGeneratorState;
+import org.util.PrecomputedMoveData;
 
 
 public class MoveGen {
@@ -88,18 +109,15 @@ public class MoveGen {
     }
 
     private static void generatePinnedPieceMoves(BoardState boardState, MoveGeneratorState moveGeneratorState) {
-        List<Integer> pinnedPiecePositions = BinUtil.getPositionsFromBitboard(moveGeneratorState.getPinnedPieceBitboard());
-
-        for (int position : pinnedPiecePositions) {
+        for (int position : getPositions(moveGeneratorState.getPinnedPieceBitboard())) {
             int pinnedPiece = boardState.getSquare(position);
-
             int friendlyKingPosition = boardState.getFriendlyKingPosition();
 
-            int xDist = (position % 8) - (friendlyKingPosition % 8);
-            int yDist = (int) (floor(position / 8f) - floor(friendlyKingPosition / 8f));
+            int xDist = X_DIST[friendlyKingPosition][position];
+            int yDist = Y_DIST[friendlyKingPosition][position];
 
             Direction directionToKing = getDirectionToTarget(xDist, yDist);
-            int directionToPinningPieceIndex = getOppositeDirection(directionToKing).getValue();
+            Direction directionToPinningPiece = getOppositeDirection(directionToKing);
 
             if (isType(pinnedPiece, PAWN)) {
                 List<String> movesToRemove = new ArrayList<>();
@@ -108,24 +126,24 @@ public class MoveGen {
                     if (getStartSquare(move) != position) {
                         continue;
                     }
-                    if (directionToPinningPieceIndex == 2 || directionToPinningPieceIndex == 3) {
-                        if (getStartSquare(move) == position) {
-                            movesToRemove.add(move);
-                        }
+                    if (directionToPinningPiece == EAST || directionToPinningPiece == WEST) {
+                        movesToRemove.add(move);
+                        continue;
                     }
-                    if (directionToPinningPieceIndex == 0 || directionToPinningPieceIndex == 1) {
+                    if (directionToPinningPiece == NORTH || directionToPinningPiece == SOUTH) {
                         if (getTargetSquare(move) + 8 != getStartSquare(move) && getTargetSquare(move) + 16 != getStartSquare(move) && getTargetSquare(move) - 8 != getStartSquare(move) && getTargetSquare(move) - 16 != getStartSquare(move)) {
                             movesToRemove.add(move);
                         }
                         continue;
                     }
+
                     int attackTargetSquare = getTargetSquare(move);
-                    int pawnAttackXDist = (position % 8) - (attackTargetSquare % 8);
-                    int pawnAttackYDist = (int) ((int) floor(position / 8f) - floor(attackTargetSquare / 8f));
-                    int pawnAttackDirection = getDirectionToTarget(pawnAttackXDist, pawnAttackYDist).getValue();
+                    int pawnAttackXDist = X_DIST[attackTargetSquare][position];
+                    int pawnAttackYDist = Y_DIST[attackTargetSquare][position];
+                    Direction pawnAttackDirection = getDirectionToTarget(pawnAttackXDist, pawnAttackYDist);
 
                     int targetPiece = boardState.getSquare(getTargetSquare(move));
-                    if (!isType(targetPiece, BISHOP) && !isType(targetPiece, QUEEN) || (pawnAttackDirection != directionToPinningPieceIndex)) {
+                    if (!isType(targetPiece, BISHOP) && !isType(targetPiece, QUEEN) || (pawnAttackDirection != directionToPinningPiece)) {
                         movesToRemove.add(move);
                     }
                 }
@@ -137,35 +155,23 @@ public class MoveGen {
 
             int directionToKingIndex = directionToKing.getValue();
 
-            // If a knight is pinned it cannot move, so we move on to the next pinned piece if any
-            if (isType(pinnedPiece, KNIGHT)) {
-                continue;
-            }
-            // Rooks cannot move diagonally so if the direction index is greater than 3 (meaning a diagonal move) we move on to the next pinned piece if any
-            if (isType(pinnedPiece, ROOK) && directionToKingIndex > 3) {
-                continue;
-            }
-            // Bishops cannot move orthogonally so if the direction index is less than 4 (meaning an orthogonal move) we move on to the next pinned piece if any
-            if (isType(pinnedPiece, BISHOP) && directionToKingIndex < 4) {
+            boolean pinnedPieceIsKnight = isType(pinnedPiece, KNIGHT);
+            boolean pinnedPieceIsRookAndIsPinned = isType(pinnedPiece, ROOK) && directionToKingIndex > 3;
+            boolean pinnedPieceIsBishopAndIsPinned = isType(pinnedPiece, BISHOP) && directionToKingIndex < 4;
+
+            if (pinnedPieceIsKnight || pinnedPieceIsRookAndIsPinned || pinnedPieceIsBishopAndIsPinned) {
                 continue;
             }
 
-            // First, calculate moves to king
-            for (int n = 1; n <= NUM_SQUARES_TO_EDGE[position][directionToPinningPieceIndex]; n++) {
-                int targetSquare = position + DIRECTION_OFFSETS[directionToPinningPieceIndex] * n;
+            for (int n = 1; n <= 8; n++) {
+                int targetSquare = friendlyKingPosition + DIRECTION_OFFSETS[directionToPinningPiece.getValue()] * n;
+                if (boardState.getSquare(targetSquare) == pinnedPiece) {
+                    continue;
+                }
                 moveGeneratorState.addMove(position, targetSquare);
                 if (boardState.getSquare(targetSquare) != 0) {
                     break;
                 }
-            }
-
-            // Then, calculate moved to pinning piece
-            for (int n = 1; n <= NUM_SQUARES_TO_EDGE[position][directionToKingIndex]; n++) {
-                int targetSquare = position + DIRECTION_OFFSETS[directionToKingIndex] * n;
-                if (boardState.getSquare(targetSquare) != 0) {
-                    break;
-                }
-                moveGeneratorState.addMove(position, targetSquare);
             }
         }
     }

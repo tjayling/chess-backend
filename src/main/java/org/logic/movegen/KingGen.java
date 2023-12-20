@@ -21,7 +21,7 @@ public class KingGen {
 
         for (long targetSquareBitboard : kingTargets) {
             targetSquareBitboard &= ~moveGeneratorState.getTaboo() & moveGeneratorState.getNotFriendlyPieces();
-            int targetSquare = BinUtil.getPositionFromBitboard(targetSquareBitboard);
+            int targetSquare = BinUtil.getLastPosition(targetSquareBitboard);
             addKingMove(kingPosition, targetSquare, moveGeneratorState);
         }
     }
