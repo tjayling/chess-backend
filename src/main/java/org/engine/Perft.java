@@ -1,6 +1,6 @@
 package org.engine;
 
-import org.gui.GuiController;
+import org.gui.perft.PerftGuiController;
 import org.logic.Mediator;
 
 import java.awt.*;
@@ -12,7 +12,7 @@ public class Perft {
 
     private static List<String> output;
 
-    public static List<String> runPerftFromFen(String fen, int depth, GuiController controller) {
+    public static List<String> runPerftFromFen(String fen, int depth, PerftGuiController controller) {
         output = new ArrayList<>();
         mediator = new Mediator(fen, false);
         int totalPermutations = search(depth, depth, "", controller);
@@ -24,7 +24,7 @@ public class Perft {
         return output;
     }
 
-    public static int search(int depth, int targetDepth, String previousMove, GuiController controller) {
+    public static int search(int depth, int targetDepth, String previousMove, PerftGuiController controller) {
         List<String> moves = mediator.getMoves();
         if (depth == 1) {
             int possibleMoves = moves.size();
@@ -56,7 +56,7 @@ public class Perft {
         return possibleMoves;
     }
 
-    private static void output(String str, GuiController controller) {
+    private static void output(String str, PerftGuiController controller) {
         EventQueue.invokeLater(() -> controller.addStringToPerftPane(str +"\n"));
         output.add(str);
     }

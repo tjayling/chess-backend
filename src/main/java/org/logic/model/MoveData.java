@@ -15,10 +15,6 @@ public class MoveData {
         this.enPassantTarget = enPassantTarget;
     }
 
-    public void flipColourToPlay() {
-        colourToPlay = getOppositeColour(colourToPlay);
-    }
-
     public int[] getSquares() {
         return squares;
     }
@@ -34,4 +30,7 @@ public class MoveData {
     public String getEnPassantTarget() {
         return enPassantTarget;
     }
+    public void flipColourToPlay() {
+    colourToPlay = getOppositeColour(colourToPlay);
+  }
 }

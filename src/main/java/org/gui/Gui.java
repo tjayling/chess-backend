@@ -1,36 +1,37 @@
 package org.gui;
 
-import org.gui.perft.PerftGui;
-import org.logic.Mediator;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 public class Gui extends JFrame {
 
-    public Gui() {
-        setLayout(new BorderLayout());
-        setTitle("Chess");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setResizable(false);
+  public Gui() {
+    GuiController controller = GuiController.instantiate(this);
 
-        Mediator mediator = new Mediator();
-        GuiController controller = new GuiController(mediator);
+    setLayout(new BorderLayout());
+    setTitle("Chess");
+    setDefaultCloseOperation(EXIT_ON_CLOSE);
+    setResizable(false);
 
-        PerftGui perftGui = new PerftGui(controller);
-        ChessGui chessGui = new ChessGui(controller);
+    controller.showActiveGui();
 
-        add(chessGui, BorderLayout.WEST);
-        add(perftGui, BorderLayout.EAST);
+    pack();
+    setLocationRelativeTo(null);
+    setVisible(true); // Set visible to true on the Swing event dispatch thread
+  }
 
-        controller.registerViews(perftGui, chessGui);
+  public void showActiveGui(JPanel gui) {
+    getContentPane().removeAll();
+    getContentPane().add(gui, BorderLayout.CENTER);
+    pack();
+    setLocationRelativeTo(null);
+    revalidate();
+    repaint();
+  }
 
-        pack();
-        setLocationRelativeTo(null);
-        setVisible(true); // Set visible to true on the Swing event dispatch thread
-    }
-
-    public static void main(String[] args) {
-        EventQueue.invokeLater(Gui::new);
-    }
+  public static void main(String[] args) {
+    EventQueue.invokeLater(Gui::new);
+  }
 }

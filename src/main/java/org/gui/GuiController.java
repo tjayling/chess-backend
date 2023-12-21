@@ -1,118 +1,51 @@
 package org.gui;
 
-import org.engine.Perft;
-import org.engine.StockfishEngineConn;
+import static org.gui.GuiPage.LANDING_PAGE;
+import static org.gui.GuiPage.PERFT_GUI;
+
+import java.util.HashMap;
+import java.util.Map;
+import javax.swing.JPanel;
 import org.gui.perft.PerftGui;
-import org.logic.Mediator;
-
-import java.awt.*;
-import java.util.Collections;
-import java.util.List;
-
-import static org.util.FenUtil.getSquaresFromFen;
 
 public class GuiController {
-    private PerftGui perftGui;
-    private ChessGui chessGui;
-    private Mediator mediator;
+  private static GuiController INSTANCE;
+  private final Gui gui;
+  private GuiPage activeGui = LANDING_PAGE;
+  private final Map<GuiPage, JPanel> pageMap;
 
-    protected GuiController(Mediator mediator) {
-        this.mediator = mediator;
+  private GuiController(Gui gui) {
+    this.gui = gui;
+    pageMap = new HashMap<>();
+  }
+
+  public static GuiController instantiate(Gui gui) {
+    if (INSTANCE != null) {
+      throw new RuntimeException("GuiController already initialized");
     }
+    INSTANCE = new GuiController(gui);
+    INSTANCE.registerPages();
+    return INSTANCE;
+  }
 
-    protected void registerViews(PerftGui perftGui, ChessGui chessGui) {
-        this.perftGui = perftGui;
-        this.chessGui = chessGui;
-
-        this.chessGui.setVisible(true);
-        this.perftGui.setVisible(true);
-
-        this.chessGui.setSquares(getSquaresFromFen(mediator.getCurrentFen()));
-        this.chessGui.setMoves(mediator.getMoves());
+  public static GuiController getInstance() {
+    if (INSTANCE == null) {
+      throw new RuntimeException("GuiController not initialized");
     }
+    return INSTANCE;
+  }
 
-    public void makeMove(String move) {
-        mediator.makeMove(move);
-        chessGui.setMoves(mediator.getMoves());
-        chessGui.setSquares(getSquaresFromFen(mediator.getCurrentFen()));
-    }
+  public void showActiveGui() {
+    gui.showActiveGui(pageMap.get(activeGui));
+  }
 
-    public void getPerftTiming(int depth) {
-        String currentFen = mediator.getCurrentFen();
+  public void setActiveGui(GuiPage guiPage) {
+    activeGui = guiPage;
+    showActiveGui();
+  }
 
-        int iterations = 5;
-
-
-        double[] times = new double[iterations - 1];
-
-        for (int i = 0; i < iterations; i++) {
-            long startTime = System.nanoTime();
-            Perft.runPerftFromFen(currentFen, depth, this);
-            long endTime = System.nanoTime();
-            if (i == 0) {
-                continue;
-            }
-            double totalTime = (endTime - startTime) / 1000000.0;
-            EventQueue.invokeLater(() -> perftGui.addStringToPerftDiffPane(String.format("Time taken: %s ms\n", totalTime)));
-            times[i - 1] = totalTime;
-        }
-
-        double sum = 0;
-        for (double time : times) {
-            sum += time;
-        }
-        double averageTime = sum / (iterations - 1);
-
-        EventQueue.invokeLater(() -> perftGui.addStringToPerftDiffPane(String.format("\nAverage time taken for depth of %s:\n %s ms\n", depth, averageTime)));
-    }
-
-    public void runPerftFromCurrentState(int depth) {
-        String currentFen = mediator.getCurrentFen();
-
-        List<String> localPerft = Perft.runPerftFromFen(currentFen, depth, this);
-
-        List<String> stockfishPerft = StockfishEngineConn.runPerftFromFen(currentFen, depth, this);
-
-        List<String> tempLocalPerft = List.copyOf(localPerft);
-
-        localPerft.removeAll(stockfishPerft);
-        stockfishPerft.removeAll(tempLocalPerft);
-        stockfishPerft.remove("");
-
-        Collections.sort(localPerft);
-        Collections.sort(stockfishPerft);
-
-        for (String s : localPerft) {
-            addStringToPerftDiffPane(s + "\n");
-        }
-        for (String s : stockfishPerft) {
-            addStringToStockfishDiffPane(s + "\n");
-        }
-    }
-
-    public String getCurrentFen() {
-        return mediator.getCurrentFen();
-    }
-
-    public void loadFen(String fenString) {
-        mediator = new Mediator(fenString, false);
-        chessGui.setSquares(getSquaresFromFen(mediator.getCurrentFen()));
-        chessGui.setMoves(mediator.getMoves());
-    }
-
-    public void addStringToPerftPane(String string) {
-        perftGui.addStringToPerftPane(string);
-    }
-
-    public void addStringToStockfishPane(String string) {
-        perftGui.addStringToStockfishPane(string);
-    }
-
-    public void addStringToPerftDiffPane(String string) {
-        perftGui.addStringToPerftDiffPane(string);
-    }
-
-    public void addStringToStockfishDiffPane(String string) {
-        perftGui.addStringToStockfishDiffPane(string);
-    }
+  private void registerPages() {
+    pageMap.put(LANDING_PAGE, new LandingGui(this));
+    pageMap.put(PERFT_GUI, new PerftGui());
+  }
 }

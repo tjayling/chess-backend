@@ -1,6 +1,6 @@
 package org.engine;
 
-import org.gui.GuiController;
+import org.gui.perft.PerftGuiController;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,7 +13,7 @@ public class StockfishEngineConn {
 
     private static OutputStreamWriter processWriter;
 
-    public static List<String> runPerftFromFen(String fen, int depth, GuiController controller) {
+    public static List<String> runPerftFromFen(String fen, int depth, PerftGuiController controller) {
         List<String> output = new ArrayList<>();
         try {
             Process process = new ProcessBuilder("stockfish").start();

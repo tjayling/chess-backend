@@ -1,6 +1,5 @@
 package org.gui.perft;
 
-import org.gui.GuiController;
 import org.gui.exception.InvalidFenFileException;
 
 import javax.swing.*;
@@ -16,7 +15,7 @@ import static org.util.LoadUtil.loadFenFromFile;
 
 public class FenPanel extends JPanel {
 
-    public FenPanel(GuiController controller) {
+    public FenPanel(PerftGuiController controller) {
         setLayout(new GridLayout(1, 2));
         setBackground(Color.lightGray);
 
